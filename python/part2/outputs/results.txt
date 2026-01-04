@@ -1,0 +1,61 @@
+Part 2: Observer Simulation Results
+============================================================
+
+Initial Conditions:
+  x0 (actual) = [0. 0. 0. 1. 1. 1. 0. 0. 0. 0. 0. 0.]
+  xhat0 (observer) = [0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.]
+
+Simulation Parameters:
+  N (simulation steps) = 1000
+  Ts (sampling time) = 0.01 s
+  Time span = 10.0 s
+  Input signal: u[k] = 0 (zero input, open-loop)
+
+Observer Design:
+  Method: pole_placement_dual
+  Placement method: YT
+  Design policy: 12 distinct real poles evenly spaced in (0.4, 0.8)
+  Balancing used: False
+  Requested poles max magnitude: 0.800000
+  Observer gain L shape: (12, 2)
+  Spectral radius (max(abs(eig(Ad - L@Cd_new)))): 0.800000
+  Observer stable: True
+
+RMS Estimation Errors:
+  Note: Full-window RMS includes transient errors from initial condition mismatch.
+        Steady-state RMS (last 20% window) reflects convergence performance.
+        Both reported for Part 3 comparison completeness.
+
+  Displacements (x1..x6) - Full window:
+    x1: 2.102968e-07
+    x2: 1.418099e-03
+    x3: 7.554792e-01
+    x4: 4.460315e+01
+    x5: 7.452427e-02
+    x6: 5.178410e-06
+  Overall RMS (displacements, full): 4.460961e+01
+
+  Displacements (x1..x6) - Steady-state window (last 20%, no-noise, float64):
+    x1: 5.539905e-17
+    x2: 3.801829e-13
+    x3: 2.176104e-10
+    x4: 1.056329e-10
+    x5: 2.061215e-13
+    x6: 3.346533e-17
+  Overall RMS (displacements, steady-state): 2.418941e-10
+
+  Overall RMS (all states, full): 2.931880e+02
+  Overall RMS (all states, steady-state): 1.720276e-09
+
+Convergence Analysis:
+  Initial error norm: 1.414214e+00
+  Final error norm: 2.243553e-09
+  Error reduction: 100.00%
+
+Final Estimation Errors (displacements):
+  e1 (x1): -1.110223e-16
+  e2 (x2): -6.083467e-13
+  e3 (x3): -3.196772e-10
+  e4 (x4): -6.525624e-11
+  e5 (x5): -3.680389e-13
+  e6 (x6): -1.110223e-16

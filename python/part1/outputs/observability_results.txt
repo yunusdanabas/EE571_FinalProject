@@ -1,0 +1,59 @@
+================================================================================
+Part 1: Observability Analysis Results
+================================================================================
+
+OBSERVABILITY RANK ANALYSIS
+--------------------------------------------------------------------------------
+System dimension (n): 12
+Number of outputs (p): 1
+Rank of observability matrix: 6
+SVD tolerance used: 1.000000e-10
+Dimension of observable subspace: 6
+Dimension of unobservable subspace: 6
+System is observable: False
+
+KALMAN DECOMPOSITION RESULTS
+--------------------------------------------------------------------------------
+Condition number of transformation T: 1.000010e+00
+T orthonormality check (T^T @ T ≈ I): PARTIAL (max error = 1.037100e-05)
+Observable block Aoo shape: (6, 6)
+Unobservable block Auu shape: (6, 6)
+Observable output block Cbar_o shape: (1, 6)
+
+EIGENVALUES
+--------------------------------------------------------------------------------
+Observable block (Aoo) eigenvalues:
+Total: 6 eigenvalues
+  Values (first 6):
+    0.999860+0.018475j
+    0.999860-0.018475j
+    1.000002-0.007653j
+    1.000002+0.007653j
+    0.999962-0.014139j
+    0.999962+0.014139j
+
+Unobservable block (Auu) eigenvalues:
+Total: 6 eigenvalues
+  Values (first 6):
+    0.999854-0.012467j
+    0.999854+0.012467j
+    0.999794-0.018015j
+    0.999794+0.018015j
+    0.999977+0.004450j
+    0.999977-0.004450j
+
+VERIFICATION CHECKS
+--------------------------------------------------------------------------------
+Dimension checks:
+  Ad shape: (12, 12) ✓
+  Cd shape: (1, 12) ✓
+  O shape: (12, 12) ✓
+  T shape: (12, 12) ✓
+  Abar shape: (12, 12) ✓
+  Cbar shape: (1, 12) ✓
+
+Reconstruction checks:
+  (Full verification with original Ad performed in console output)
+  Condition number check: cond(T) = 1.000010e+00 ✓ (< 1e12)
+  Output coupling check: max|Cbar[:, 6:]| = 0.000000e+00 ✓ (< 1e-10)
+
