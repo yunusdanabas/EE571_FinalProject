@@ -23,8 +23,8 @@ def get_part2_initial_conditions():
     """
     Get Part 2 initial conditions.
     
-    Source: Unverified (from docs/00_anchor.md, to be verified against docs/sources/final_exam.pdf)
-    Values from anchor document:
+    Source: Verified from final exam Question 2 (docs/sources/final_exam.pdf)
+    The exam explicitly provides these initial conditions:
         - Actual state x0: [0; 0; 0; 1; 1; 1; 0; 0; 0; 0; 0; 0]
         - Observer initial state xhat0: [0; 0; 0; 0; 0; 1; 0; 0; 0; 0; 0; 0]
     
@@ -198,6 +198,8 @@ if __name__ == '__main__':
     # Get Part 2 C matrix
     print("2. Using Part 2 sensor matrix (measuring x1 and x6)...")
     Cd_new = get_part2_C_matrix()
+    print(f"   Cd_new shape: {Cd_new.shape}")
+    print(f"   Cd_new = \n{Cd_new}")
     
     # Get initial conditions
     print("3. Loading Part 2 initial conditions...")
@@ -357,6 +359,10 @@ if __name__ == '__main__':
     with open(results_file, 'w') as f:
         f.write("Part 2: Observer Simulation Results\n")
         f.write("="*60 + "\n\n")
+        
+        f.write("Measurement Matrix:\n")
+        f.write(f"  Cd_new shape: {Cd_new.shape}\n")
+        f.write(f"  Cd_new = \n{Cd_new}\n\n")
         
         f.write("Initial Conditions:\n")
         f.write(f"  x0 (actual) = {x0}\n")

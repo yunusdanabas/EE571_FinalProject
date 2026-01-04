@@ -1,0 +1,71 @@
+/home/yunusdanabas/EE571_FinalProject/python/part2/observer_design.py:195: UserWarning: Convergence was not reached after maxiter iterations.
+You asked for a tolerance of 0.01, we got 1.0.
+  result = place_poles(
+============================================================
+Part 2: Observer Simulation
+============================================================
+
+1. Loading model from Part 0 utilities...
+2. Using Part 2 sensor matrix (measuring x1 and x6)...
+   Cd_new shape: (2, 12)
+   Cd_new = 
+[[1 0 0 0 0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 1 0 0 0 0 0 0]]
+3. Loading Part 2 initial conditions...
+   x0 = [0. 0. 0. 1. 1. 1. 0. 0. 0. 0. 0. 0.]
+   xhat0 = [0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.]
+
+4. Designing observer...
+   Observer gain L shape: (12, 2)
+   Design policy: 12 distinct real poles evenly spaced in (0.4, 0.8)
+   Spectral radius: 0.800000
+   Observer stable: True
+
+5. Setting up simulation...
+   Simulation horizon: N = 1000 steps (10.0 seconds)
+   Input signal: u[k] = 0 (zero input, open-loop)
+
+6. Running coupled plant-observer simulation...
+   Simulation complete.
+   Final estimation error (displacements): [-2.22044605e-16 -1.29046773e-12 -8.90291174e-10 -2.57327493e-11
+ -6.80566714e-14 -1.11022302e-16]
+
+7. Computing RMS estimation errors...
+   RMS errors for displacements (x1..x6) - Full window:
+     x1: 3.533248e-08
+     x2: 3.546375e-04
+     x3: 3.686065e-01
+     x4: 4.509872e+01
+     x5: 7.495280e-02
+     x6: 5.252366e-06
+   Overall RMS (displacements, full): 4.510029e+01
+
+   RMS errors for displacements (x1..x6) - Steady-state window (last 20%):
+     x1: 5.619633e-17
+     x2: 3.567464e-13
+     x3: 2.026473e-10
+     x4: 1.110841e-10
+     x5: 2.105661e-13
+     x6: 3.479148e-17
+   Overall RMS (displacements, steady-state): 2.310969e-10
+
+   Overall RMS (all states, full): 2.979952e+02
+   Overall RMS (all states, steady-state): 1.635892e-09
+
+8. Generating plots...
+   Saved: /home/yunusdanabas/EE571_FinalProject/python/part2/outputs/outputs_comparison.png
+   Saved: /home/yunusdanabas/EE571_FinalProject/python/part2/outputs/estimation_errors.png
+   Saved: /home/yunusdanabas/EE571_FinalProject/python/part2/outputs/all_state_errors.png
+
+9. Saving results to file...
+   Saved: /home/yunusdanabas/EE571_FinalProject/python/part2/outputs/results.txt
+
+============================================================
+Part 2 simulation complete!
+============================================================
+
+Output files saved to: /home/yunusdanabas/EE571_FinalProject/python/part2/outputs/
+  - outputs_comparison.png
+  - estimation_errors.png
+  - all_state_errors.png
+  - results.txt

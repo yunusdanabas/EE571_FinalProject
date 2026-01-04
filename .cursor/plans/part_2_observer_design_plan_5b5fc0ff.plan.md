@@ -57,8 +57,8 @@ rt 2: Observer Design with Augmented Sensor Matrix - Plan
 - Part 2 `Cd_new` should measure `x1` and `x6` (displacements of masses 1 and 6)
 - Verify exact `Cd_new` matrix from the PDF (expected 2×12):
      ```javascript
-                    Cd_new = [1 0 0 0 0 0 0 0 0 0 0 0;
-                              0 0 0 0 0 1 0 0 0 0 0 0]
+                         Cd_new = [1 0 0 0 0 0 0 0 0 0 0 0;
+                                   0 0 0 0 0 1 0 0 0 0 0 0]
      ```
 
 
@@ -76,8 +76,8 @@ rt 2: Observer Design with Augmented Sensor Matrix - Plan
 
 - Observer structure:
      ```javascript
-                    xhat[k+1] = Ad @ xhat[k] + Bd @ u[k] + L @ (y[k] - yhat[k])
-                    yhat[k] = Cd_new @ xhat[k]
+                         xhat[k+1] = Ad @ xhat[k] + Bd @ u[k] + L @ (y[k] - yhat[k])
+                         yhat[k] = Cd_new @ xhat[k]
      ```
 
 
@@ -167,8 +167,8 @@ rt 2: Observer Design with Augmented Sensor Matrix - Plan
 
 - Luenberger observer equations:
      ```javascript
-                    xhat[k+1] = Ad @ xhat[k] + Bd @ u[k] + L @ (y[k] - yhat[k])
-                    yhat[k] = Cd @ xhat[k]
+                         xhat[k+1] = Ad @ xhat[k] + Bd @ u[k] + L @ (y[k] - yhat[k])
+                         yhat[k] = Cd @ xhat[k]
      ```
 
 
@@ -269,13 +269,13 @@ rt 2: Observer Design with Augmented Sensor Matrix - Plan
 
 3. Simulate forward for `k = 0` to `N-1`:
    ```javascript
-            # Plant simulation
-            y[k] = Cd_new @ x[k]
-            x[k+1] = Ad @ x[k] + Bd @ u[k]
-            
-            # Observer simulation
-            yhat[k] = Cd_new @ xhat[k]
-            xhat[k+1] = Ad @ xhat[k] + Bd @ u[k] + L @ (y[k] - yhat[k])
+               # Plant simulation
+               y[k] = Cd_new @ x[k]
+               x[k+1] = Ad @ x[k] + Bd @ u[k]
+               
+               # Observer simulation
+               yhat[k] = Cd_new @ xhat[k]
+               xhat[k+1] = Ad @ xhat[k] + Bd @ u[k] + L @ (y[k] - yhat[k])
    ```
 
 
@@ -523,5 +523,3 @@ Part 2 explicitly does NOT include:
 - Metrics utilities may need extension for RMS error computation
 
 ### Code Organization
-
-- Keep design and simulation separate: `observer_design.py` for gain computation, `run_observer_sim.py` for simulation and plotting

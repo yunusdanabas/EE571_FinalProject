@@ -1,0 +1,54 @@
+============================================================
+Part 0: Baseline Verification
+============================================================
+
+1. Building continuous-time model...
+   A shape: (12, 12)
+   B shape: (12, 3)
+   C shape: (1, 12)
+
+2. Discretizing using ZOH...
+   Ad shape: (12, 12)
+   Bd shape: (12, 3)
+   Cd shape: (1, 12)
+   Dd shape: (1, 3) (should be all zeros)
+
+3. Validating dimensions...
+   Number of states (n): 12
+   Number of inputs (m): 3
+   Number of outputs (p): 1
+   Ad valid: True
+   Bd valid: True
+   Cd valid: True
+   All dimensions valid: True
+
+4. Setting up simulation...
+   Initial condition: x0 = [0 0 0 0 0 1 0 0 0 0 0 0]
+   Input shape: (3, 1000) (zero input)
+   Number of steps: 1000
+   Sampling time: 0.01 s
+
+5. Running simulation...
+   State trajectory shape: (12, 1000)
+   Output trajectory shape: (1, 1000)
+   Time vector shape: (1000,)
+
+6. Performing sanity checks...
+   Contains NaN: False
+   Contains Inf: False
+   States and outputs are bounded (no NaN/Inf)
+   Maximum output magnitude: 0.724325
+   Maximum state magnitude: 1.000000
+   State and output magnitudes are reasonable
+
+7. Generating plots...
+   Saved: python/part0/output_plot.png (shows 1 output matching C matrix)
+   Saved: python/part0/displacements_plot.png (shows all 6 displacements)
+
+============================================================
+Baseline verification complete!
+============================================================
+
+Note: The output plot shows only 1 trace (matching C matrix),
+      while the displacements plot shows all 6 positions for visualization.
+      This addresses the legend mismatch issue in prep_final.m

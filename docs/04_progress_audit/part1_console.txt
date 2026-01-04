@@ -1,0 +1,44 @@
+================================================================================
+Part 1: Observability Analysis and Kalman Decomposition
+================================================================================
+
+Step 1: Loading system matrices...
+  Continuous-time: A shape (12, 12), B shape (12, 3), C shape (1, 12)
+  Discrete-time: Ad shape (12, 12), Bd shape (12, 3), Cd shape (1, 12)
+  Sampling time: Ts = 0.01 s
+
+Step 2: Performing observability rank analysis...
+  Rank of observability matrix: 6
+  SVD tolerance used: 1.000000e-10
+  Dimension of observable subspace: 6
+  Dimension of unobservable subspace: 6
+  System is observable: False
+
+Step 3: Performing Kalman decomposition...
+  Condition number of T: 1.000010e+00
+  Observable block shape: (6, 6)
+  Unobservable block shape: (6, 6)
+
+Step 4: Verification checks...
+  Ad reconstruction: ✓ PASS
+  Cd reconstruction: ✓ PASS
+  T orthonormality (T^T @ T ≈ I): ✗ PARTIAL (max error = 1.037100e-05)
+  Output coupling (Cbar[:, 6:] ≈ 0): ✓ PASS (max = 0.000000e+00)
+  Eigenvalue consistency: ✓ PASS
+
+Step 5: Saving results...
+Results saved to: /home/yunusdanabas/EE571_FinalProject/python/part1/outputs/observability_results.txt
+Observability matrix summary saved to: /home/yunusdanabas/EE571_FinalProject/python/part1/outputs/O_matrix_summary.txt
+Observability matrix (full) saved to: /home/yunusdanabas/EE571_FinalProject/python/part1/outputs/O_matrix.txt
+Transformed A matrix saved to: /home/yunusdanabas/EE571_FinalProject/python/part1/outputs/Abar_matrix.txt
+Observable eigenvalues saved to: /home/yunusdanabas/EE571_FinalProject/python/part1/outputs/eigenvalues_obs.txt
+Unobservable eigenvalues saved to: /home/yunusdanabas/EE571_FinalProject/python/part1/outputs/eigenvalues_unobs.txt
+
+================================================================================
+SUMMARY
+================================================================================
+Observability rank: 6 / 12
+Observable eigenvalues: 6
+Unobservable eigenvalues: 6
+
+Analysis complete!

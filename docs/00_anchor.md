@@ -9,6 +9,46 @@ This project implements control system design for a **6-mass spring chain system
   - *Note: Physical interpretation (tension/force) from exam statement - verify against `docs/sources/final_exam.pdf`*
 - **Task sequence**: Observability analysis → Observer design → LQR control → Reduced input LQR → Kalman filter → LQG (LQR + Kalman) → Sensor augmentation analysis
 
+## Exam-Verified Definitions
+
+The following definitions are explicitly stated in the final exam (`docs/sources/final_exam.pdf`) and are used as authoritative sources:
+
+### Baseline Measurement (Parts 0 and 1)
+
+The exam states that `prep_final.m` assumes **only a single output is measured**, the displacement of the first body. This aligns with:
+
+\[
+C_{\text{base}} = \begin{bmatrix} 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}
+\]
+
+**Source**: Final exam statement about prep code. See also `docs/sources/final_exam_extract.md`. PDF page number: *[To be recorded from final_exam.pdf]*
+
+### Part 2 Measurement Matrix and Initial Conditions
+
+**Measurement Matrix (Cd_new)**:
+The exam explicitly provides the augmented sensor matrix measuring x1 and x6:
+
+\[
+C_{\text{part2}} = \begin{bmatrix}
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0
+\end{bmatrix}
+\]
+
+**Initial Conditions**:
+- Actual system initial state:
+  \[
+  x_0 = \begin{bmatrix} 0 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}^T
+  \]
+- Observer initial state:
+  \[
+  \hat{x}_0 = \begin{bmatrix} 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}^T
+  \]
+
+**Source**: Final exam Question 2. See also `docs/sources/final_exam_extract.md`. PDF page number: *[To be recorded from final_exam.pdf]*
+
+**Note**: These definitions are verified from exam screenshots. Page numbers should be recorded by opening `docs/sources/final_exam.pdf` and locating Question 2. For comprehensive reference, see `docs/sources/final_exam_extract.md`.
+
 ## File Inventory and Role
 
 ### Reference File: `matlab/prep_final.m`
@@ -137,7 +177,7 @@ where:
 |------|----------|---------------------|-------------------|--------|
 | 0 | `[1 0 0 0 0 0 0 0 0 0 0 0]` (1×12) | `[0; 0; 0; 0; 0; 1; 0; 0; 0; 0; 0; 0]` | N/A | `matlab/prep_final.m` |
 | 1 | `[1 0 0 0 0 0 0 0 0 0 0 0]` (1×12) | `[0; 0; 0; 0; 0; 1; 0; 0; 0; 0; 0; 0]` | N/A | `matlab/prep_final.m` |
-| 2 | `[1 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 1 0 0 0 0 0 0]` (2×12) | Actual: `[0; 0; 0; 1; 1; 1; 0; 0; 0; 0; 0; 0]`<br>Estimated: `[0; 0; 0; 0; 0; 1; 0; 0; 0; 0; 0; 0]` | N/A | From exam statement (verify `docs/sources/final_exam.pdf`) |
+| 2 | `[1 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 1 0 0 0 0 0 0]` (2×12) | Actual: `[0; 0; 0; 1; 1; 1; 0; 0; 0; 0; 0; 0]`<br>Estimated: `[0; 0; 0; 0; 0; 1; 0; 0; 0; 0; 0; 0]` | N/A | Verified from final exam Question 2 |
 | 3 | Same as Part 2 (2×12) | Same as Part 2 | N/A | From exam statement |
 | 4 | Same as Part 2 (2×12) | Same as Part 2 | N/A | From exam statement |
 | 5 | Same as Part 2 (2×12) | Same as Part 2 | `v ~ N(0, 0.1 I_p)`, `w ~ N(0, 0.05 I_m)` | From exam statement |
@@ -145,7 +185,7 @@ where:
 | 7 Case 1 | 4×12 (see Part 7 section) | Same as Part 2 | Same as Part 5 | From exam statement |
 | 7 Case 2 | 6×12 (see Part 7 section) | Same as Part 2 | Same as Part 5 | From exam statement |
 
-**Note**: If `final_exam.pdf` is not in `docs/sources/`, add it there and reference by path. All exam-statement-derived values must be verified against this source.
+**Note**: Part 2 definitions (C matrix and initial conditions) are verified from final exam Question 2. See "Exam-Verified Definitions" section above for details. PDF page numbers should be recorded by opening `docs/sources/final_exam.pdf`.
 
 ## Breakdown into Subprojects
 

@@ -27,8 +27,8 @@ def get_part2_C_matrix():
     """
     Get Part 2 sensor matrix Cd_new (2×12) measuring x1 and x6.
     
-    Source: Unverified (from docs/00_anchor.md, to be verified against docs/sources/final_exam.pdf)
-    Expected: Measures displacement of mass 1 (x1) and mass 6 (x6)
+    Source: Verified from final exam Question 2 (docs/sources/final_exam.pdf)
+    The exam explicitly provides this measurement matrix.
     
     Returns:
         Cd_new: (2, 12) output matrix
