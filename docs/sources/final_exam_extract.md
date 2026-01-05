@@ -266,7 +266,9 @@ grid on;
 
 ## 12) Page Number Placeholders
 
-Fill these by opening `docs/sources/final_exam.pdf` and recording the exact page and question reference.
+**NOTE:** PDF page numbers need to be filled manually by opening `docs/sources/final_exam.pdf` and recording the exact page and question reference. The PDF file exists at `docs/sources/final_exam.pdf` but page numbers are not yet recorded.
+
+**To fill:** Open the PDF, locate each question, and record the page number below.
 
 - Baseline single output statement. Page: ____. Question: ____.
 - Part 2 (C_{\text{part2}}), (x_0), (\hat{x}_0). Page: ____. Question: 2.

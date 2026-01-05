@@ -106,15 +106,19 @@ def main():
     print("\n7. Generating plots...")
     
     # Plot outputs (dimension-aware: should show only 1 trace since C is 1×12)
+    # EXPLICIT: output_plot.png shows y = Cx (baseline output with C = [1 0 ... 0], ONE trace)
     fig1, ax1 = plot_outputs(t, y, labels=['y1'], 
-                             title='System Output (displacement of mass 1)')
+                             title='Baseline System Output: y = Cx (C measures x1 only, 1 trace)')
     plt.savefig('python/part0/output_plot.png', dpi=150, bbox_inches='tight')
-    print("   Saved: python/part0/output_plot.png (shows 1 output matching C matrix)")
+    print("   Saved: python/part0/output_plot.png")
+    print("         EXPLICIT: Shows baseline output y = Cx (ONE trace, matching C matrix dimension)")
     
     # Plot all 6 displacements for visualization (using states, not outputs)
-    fig2, ax2 = plot_displacements(t, x, title='All Mass Displacements (for visualization)')
+    # EXPLICIT: displacements_plot.png shows x_1..x_6 (state traces), NOT the baseline output y
+    fig2, ax2 = plot_displacements(t, x, title='All Mass Displacements: x_1..x_6 (state traces, NOT output y)')
     plt.savefig('python/part0/displacements_plot.png', dpi=150, bbox_inches='tight')
-    print("   Saved: python/part0/displacements_plot.png (shows all 6 displacements)")
+    print("   Saved: python/part0/displacements_plot.png")
+    print("         EXPLICIT: Shows x_1..x_6 (6 state traces), NOT the baseline output y")
     
     # Show plots (optional - comment out if running in non-interactive mode)
     # plt.show()
@@ -122,9 +126,10 @@ def main():
     print("\n" + "=" * 60)
     print("Baseline verification complete!")
     print("=" * 60)
-    print("\nNote: The output plot shows only 1 trace (matching C matrix),")
-    print("      while the displacements plot shows all 6 positions for visualization.")
-    print("      This addresses the legend mismatch issue in prep_final.m")
+    print("\nPLOT CLARIFICATION:")
+    print("  - output_plot.png: Baseline output y = Cx (ONE trace, C measures x1 only)")
+    print("  - displacements_plot.png: All 6 displacements x_1..x_6 (state traces, NOT output y)")
+    print("  This addresses the legend mismatch issue in prep_final.m")
 
 
 if __name__ == '__main__':

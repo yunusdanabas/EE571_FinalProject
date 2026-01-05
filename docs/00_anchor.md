@@ -133,7 +133,14 @@ Each part has its own documentation directory:
 ### Simulation Horizon
 - **Default**: `N = 1000` steps (10 seconds at `Ts = 0.01`)
 - Parts may override this if specified in the problem statement
-- Time vector: `t = (0:N-1) * Ts`
+- **Time vector:** `t = np.arange(N+1) * Ts` (length N+1, matches state/output arrays: t[0] to t[N])
+
+### Array Indexing Convention (FROZEN)
+- **State trajectory x:** `(n, N+1)` stores `x[0]` through `x[N]` (N+1 samples)
+- **Input trajectory u:** `(m, N)` stores `u[0]` through `u[N-1]` (N samples)
+- **Output trajectory y:** `(p, N+1)` stores `y[0]` through `y[N]` (N+1 samples)
+- **Time vector t:** `(N+1,)` stores `t[0]` through `t[N]` where `t[k] = k * Ts`
+- **Cost indexing:** `J = sum from k=0 to N-1 of stage_cost[k]` (u[k] pairs with transition from x[k] to x[k+1])
 
 ### Cost Metrics
 
@@ -229,7 +236,7 @@ where:
 
 ### Part 5: Kalman Filter Design
 - System with process and measurement noise:
-  - `x_{k+1} = A_d x_k + B_d u_k + B_d w_k` (verify exam statement: noise enters through `B_d`; if unclear, flag as decision point)
+  - `x_{k+1} = A_d x_k + B_d u_k + B_d w_k` (verified from exam statement: noise enters through `B_d` per `docs/sources/final_exam_extract.md` Section 7)
   - `y_k = C_d x_k + v_k`
 - **Noise characteristics**:
   - `v ~ N(0, 0.1 I_p)` where `p = size(C, 1)` (number of outputs for current `C`)

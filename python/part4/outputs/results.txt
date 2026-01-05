@@ -1,0 +1,163 @@
+Part 4: LQR Controller Design with Reduced Input (u3 Removed) - Results
+============================================================
+
+Reproducibility Information:
+  Python version: 3.12.11
+  NumPy version: 2.3.3
+  SciPy version: 1.16.2
+  Platform: Linux-6.8.0-90-generic-x86_64-with-glibc2.39
+
+Simulation Parameters:
+  N (number of input samples) = 1000
+  Ts (sampling time) = 0.01 s
+  Time span = 10.0 s
+  Array dimensions (standard convention):
+    - x: (n, N+1) stores x[0] through x[N]
+    - u_red: (2, N) stores u_red[0] through u_red[N-1]
+    - y: (p, N+1) stores y[0] through y[N]
+  Cost accumulation convention: J_red = sum from k=0 to 999 of stage_cost[k]
+    - Cost range: k = 0 to 999 (inclusive, all N input samples)
+    - Standard convention: u_red[k] pairs with transition from x[k] to x[k+1]
+    - All N inputs are applied (u_red[0] through u_red[N-1])
+
+Input Reduction:
+  Bd_red shape: (12, 2)
+  Input removal convention: Bd_red = Bd[:, [0, 1]] (extracts columns 0 and 1)
+  Reduced input dimension: u_red in R² (u1 and u2 only, u3 removed)
+
+Initial Conditions:
+  x0 (actual) = [0. 0. 0. 1. 1. 1. 0. 0. 0. 0. 0. 0.]
+  xhat0 (observer) = [0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.]
+  Note: Initial conditions carried over from Part 2 (exam specification)
+  Exact values for reproducibility:
+    x0 = [0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00, 1.000000000000000e+00, 1.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00]
+    xhat0 = [0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00]
+
+Cost Matrices:
+  Cy (cost output selector) shape: (2, 12)
+  Cy = 
+[[1 0 0 0 0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 1 0 0 0 0 0 0]]
+  Cy outputs: [x1, x6] (displacements of masses 1 and 6)
+  Q (state weight) shape: (12, 12)
+  Q = Cy^T @ Cy (symmetric, positive semidefinite, same as Part 3)
+  Q symmetry error: max |Q - Q.T| = 0.00e+00
+  R_red (input weight) shape: (2, 2)
+  R_red = I2 (2×2 identity matrix, reduced from Part 3's I3)
+  R_red symmetry error: max |R_red - R_red.T| = 0.00e+00
+  R_red minimum eigenvalue: 1.00e+00
+  R_red + Bd_red^T P_red Bd_red minimum eigenvalue: 1.01e+00
+  Cost computation: Uses plant output y[k] = Cy @ x[k] (not estimated output)
+  Cost consistency: Verified that stage_cost[k] uses u_red[k] and y[k] from same k ✓
+
+LQR Design:
+  Stabilizability check: PBH rank condition for (Ad, Bd_red)
+  PBH tolerance used: 1.00e-10
+  Controllability rank: 11/12
+  Minimum PBH rank observed: 12/12
+  Detectability check: PASS
+  Potentially unstable eigenvalues checked: 12
+    λ_1 = 0.999811+0.019418j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 1.90e-03
+    λ_2 = 0.999811-0.019418j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 1.90e-03
+    λ_3 = 0.999843+0.017708j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 1.71e-03
+    λ_4 = 0.999843-0.017708j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 1.71e-03
+    λ_5 = 0.999888+0.014970j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 2.73e-03
+    λ_6 = 0.999888-0.014970j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 2.73e-03
+    λ_7 = 0.999935+0.011361j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 2.14e-03
+    λ_8 = 0.999935-0.011361j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 2.14e-03
+    λ_9 = 0.999975+0.007092j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 1.72e-03
+    λ_10 = 0.999975-0.007092j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 1.72e-03
+    λ_11 = 0.999997+0.002411j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 1.08e-03
+    λ_12 = 0.999997-0.002411j (|λ| = 1.000000), PBH rank: 12/12, rank margin: 1.08e-03
+  K_red (LQR gain) shape: (2, 12)
+  K_red matrix:
+    Row 1: [ 0.40722384  0.05577754 -0.14086982 -0.12207198 -0.03342155  0.04320644
+ -0.01443471 -0.86164195 -0.92535074 -0.79481338 -0.6802205  -0.64476382]
+    Row 2: [-0.05058711 -0.06700394 -0.10807341 -0.11552346 -0.04352164 -0.40744813
+  0.01204322  0.047036    0.06941777  0.01044836 -0.26589539 -1.12673671]
+  Closed-loop matrix: Acl_red = Ad - Bd_red @ K_red
+  Spectral radius (max(|eig(Acl_red)|)): 0.999518
+  Stability margin: 4.820627e-04 (distance from unity)
+  Closed-loop stable: True
+  R_red + Bd_red^T P_red Bd_red minimum eigenvalue: 1.01e+00
+  Dominant eigenvalue: 0.999335+0.019105j
+    Magnitude: 0.999518
+    Angle: 0.019116 rad (1.10 deg)
+    Type: Complex pair
+  Closed-loop eigenvalues:
+    λ_1 = 0.999335+0.019105j (|λ| = 0.999518)
+    λ_2 = 0.999335-0.019105j (|λ| = 0.999518)
+    λ_3 = 0.997711+0.017516j (|λ| = 0.997865)
+    λ_4 = 0.997711-0.017516j (|λ| = 0.997865)
+    λ_5 = 0.997766+0.015399j (|λ| = 0.997885)
+    λ_6 = 0.997766-0.015399j (|λ| = 0.997885)
+    λ_7 = 0.998189+0.011877j (|λ| = 0.998260)
+    λ_8 = 0.998189-0.011877j (|λ| = 0.998260)
+    λ_9 = 0.998981+0.007386j (|λ| = 0.999008)
+    λ_10 = 0.998981-0.007386j (|λ| = 0.999008)
+    λ_11 = 0.998910+0.002562j (|λ| = 0.998913)
+    λ_12 = 0.998910-0.002562j (|λ| = 0.998913)
+
+Controller Validation:
+  Control law: u_red[k] = -K_red @ xhat[k]
+  CRITICAL: Controller uses xhat (estimated states), not x (true states)
+  Validation: u_red[k] computed from xhat[k] for all k ✓
+  Diagnostic (first 100 samples): max ||u_red - (-K_red @ x)|| = 3.344406e+03
+  Diagnostic (final sample k=999): ||u_red - (-K_red @ x)|| = 7.781734e-10
+  Diagnostic (overall): max ||u_red - (-K_red @ x)|| = 3.344406e+03
+  Note: Non-zero values confirm u_red uses xhat, even after observer convergence
+
+Simulation Results:
+  Max absolute state magnitude: 1.032589e+02
+  Max absolute input magnitude: 3.310572e+03
+  Max estimation error norm ||x - xhat||: 4.110371e+03
+  End-of-window outputs:
+    |y1[N]| = 1.455848e-01 (final output at time N)
+    |y6[N]| = 1.549996e-01 (final output at time N)
+  Steady-state metrics (last 20% of state samples, indices 800 to 1000):
+    y1 mean absolute: 1.917718e-01, RMS: 1.952750e-01
+    y6 mean absolute: 1.254874e-01, RMS: 1.388320e-01
+
+Cost Metrics:
+  Total cost J_red = 5.838118e+07
+  Cost range: k = 0 to 999 (inclusive)
+  Cost implementation: stage_cost[k] = u_red[k]^T @ u_red[k] + y_cost[0]^2 + y_cost[1]^2
+    where y_cost = Cy @ x[k] (plant output at time k, not estimated)
+    Standard convention: u_red[k] pairs with transition from x[k] to x[k+1] ✓
+    Consistency verified: u_red[k] and y[k] from same time index k ✓
+  Max |u1| = 3.310572e+03
+  Max |u2| = 4.921896e+01
+  Max |u_red| overall = 3.310572e+03 (aligned with Part 3: max(abs(u)) across all elements)
+  Max ||u_red[k]||_inf = 3.310572e+03
+
+Part 2 Observer (Reused):
+  Observer gain L shape: (12, 2)
+  Observer spectral radius: 0.800000
+  Observer stable: True
+  Observer closed-loop matrix: Aobs = Ad - L @ Cmeas
+  Observer closed-loop spectral radius: 0.800000
+  Measurement matrix Cmeas shape: (2, 12)
+  Cmeas measures x1 and x6 (Part 2 sensor configuration)
+  Note: Observer redesigned using same method/parameters as Part 2/3 for consistency
+
+Comparison Against Part 3:
+  Part 3 baseline loaded successfully from python/part3/outputs/results.txt
+  Part3_J = 3.915420e+07
+  Part4_J = 5.838118e+07
+  delta_J = Part4_J - Part3_J = 1.922698e+07
+  Relative change: 49.11%
+
+  Maximum Input Magnitudes:
+    Part3_max_abs_u1 = 1.228057e+03
+    Part4_max_abs_u1 = 3.310572e+03
+    Part3_max_abs_u2 = 2.700929e+01
+    Part4_max_abs_u2 = 4.921896e+01
+    Part3_max_abs_u3 = 2.403429e+03 (not applicable to Part 4)
+    Part3_max_abs_u_overall = 2.403429e+03
+    Part4_max_abs_u_overall = 3.310572e+03 (aligned metric: max(abs(u_red)))
+    Part4_max ||u_red[k]||_inf = 3.310572e+03 (additional metric)
+
+Source Citations:
+  Part 4 requirement: docs/sources/final_exam_extract.md Section 6
+  Part 3 cost definition: docs/sources/final_exam_extract.md Section 5
+  Part 2 C matrix and initial conditions: docs/sources/final_exam_extract.md Section 4
