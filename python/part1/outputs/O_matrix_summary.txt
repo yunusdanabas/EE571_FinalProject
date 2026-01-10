@@ -20,9 +20,9 @@ All singular values (log10):
    7: 3.036186e-12 (log10 = -11.518)
    8: 1.065974e-14 (log10 = -13.972)
    9: 2.967503e-17 (log10 = -inf, effectively zero)
-  10: 6.592329e-20 (log10 = -inf, effectively zero)
-  11: 1.090091e-22 (log10 = -inf, effectively zero)
-  12: 1.203170e-25 (log10 = -inf, effectively zero)
+  10: 6.592358e-20 (log10 = -inf, effectively zero)
+  11: 1.089836e-22 (log10 = -inf, effectively zero)
+  12: 1.184346e-25 (log10 = -inf, effectively zero)
 
 Singular value ratios (relative to max):
    1: 1.000000e+00
@@ -33,7 +33,7 @@ Singular value ratios (relative to max):
    6: 2.034631e-10
    7: 8.788392e-13
    8: 3.085514e-15
-   9: 8.589585e-18
-  10: 1.908182e-20
-  11: 3.155322e-23
-  12: 3.482635e-26
+   9: 8.589584e-18
+  10: 1.908191e-20
+  11: 3.154584e-23
+  12: 3.428147e-26

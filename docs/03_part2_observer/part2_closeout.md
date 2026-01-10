@@ -7,8 +7,8 @@ Part 2 successfully designed and implemented a discrete-time Luenberger observer
 ## Deliverables Completed
 
 ### Documentation
-- [x] `docs/03_part2_observer/plan.md` - Implementation plan
-- [x] `docs/03_part2_observer/closeout.md` - This file
+- [x] `docs/03_part2_observer/part2_plan.md` - Implementation plan
+- [x] `docs/03_part2_observer/part2_closeout.md` - This file
 
 ### Python Modules (`python/part2/`)
 - [x] `observer_design.py` - Observer design and observability analysis

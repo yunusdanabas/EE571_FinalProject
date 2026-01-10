@@ -161,8 +161,8 @@ Part 3 successfully designed and implemented a discrete-time infinite-horizon LQ
 
 ### Documentation
 
-- [x] `docs/05_part3_lqr/plan.md` - Implementation plan
-- [x] `docs/05_part3_lqr/closeout.md` - This file
+- [x] `docs/05_part3_lqr/part3_plan.md` - Implementation plan
+- [x] `docs/05_part3_lqr/part3_closeout.md` - This file
 
 ### Python Code
 

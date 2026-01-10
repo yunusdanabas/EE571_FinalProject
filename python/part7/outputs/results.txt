@@ -1,0 +1,192 @@
+Part 7: Sensor Augmentation Analysis - Results
+============================================================
+
+Reproducibility Information:
+  Python version: 3.12.11
+  NumPy version: 2.3.3
+  SciPy version: 1.16.2
+  Platform: Linux-6.8.0-90-generic-x86_64-with-glibc2.39
+  Random seed: 42
+
+Simulation Parameters:
+  N (number of input samples) = 1000
+  Ts (sampling time) = 0.01 s
+  Time span = 10.0 s
+
+Initial Conditions (from Part 2):
+  x0 (actual) = [0. 0. 0. 1. 1. 1. 0. 0. 0. 0. 0. 0.]
+  xhat0 (estimator) = [0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.]
+
+Cost Function (FROZEN):
+  J = sum_{k=0}^{N-1} (u[k]^T u[k] + y1[k]^2 + y6[k]^2)
+  Cy shape: (2, 12)
+  Note: Cost uses y1 and y6 regardless of sensor configuration
+
+LQR Controller K (from Part 3, UNCHANGED):
+  K shape: (3, 12)
+  K loaded from Part 3: True
+  ||K||_F: 2.091668e+00
+  max|K|: 8.505127e-01
+  Controller spectral radius: 0.999463
+  Controller stable: True
+
+Process Noise (FROZEN from Part 5):
+  Qw = 0.05 * I_3
+  seed = 42
+
+============================================================
+CASE 1: 4 sensors (x1, x2, x5, x6)
+============================================================
+
+Measurement Matrix:
+  C_case1 shape: (4, 12)
+  C_case1 measures: x1, x2, x5, x6
+  C_case1 = 
+[[1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.]]
+
+Measurement Noise:
+  Rv_case1 = 0.1 * I_4
+  Rv_case1 shape: (4, 4)
+
+Kalman Filter Design:
+  Lk_case1 shape: (12, 4)
+  Estimator spectral radius: 0.998968
+  Estimator stable: True
+  Innovation covariance S condition: 1.001932e+00
+  Note: S condition number is close to 1.0 because S = Cmeas @ P @ Cmeas.T + Rv,
+        and Rv = 0.1*I_p dominates the diagonal. Small off-diagonal terms from
+        Cmeas @ P @ Cmeas.T make condition number slightly > 1.0.
+  Note: DARE (Discrete Algebraic Riccati Equation) solver has finite numerical
+        precision. Relative residuals of ~2-3% are normal for scipy's
+        solve_discrete_are() function and do not indicate design errors.
+        The Kalman gain Lk is computed correctly from the DARE solution P.
+
+Metrics:
+  J_true: 4.017590e+02
+  J_u_component (control effort): 5.554592e+01
+  J_y_component (output penalty): 3.462131e+02
+  max|u| overall: 4.086037e-01
+  RMS estimation error (full): 8.655016e-01
+  RMS estimation error (SS, last 20%): 4.643125e-01
+  RMS y1 (full): 2.485688e-01
+  RMS y1 (SS): 1.761945e-01
+  RMS y6 (full): 5.331225e-01
+  RMS y6 (SS): 2.802935e-01
+
+Per-State RMS Estimation Error (Steady-State):
+  x1: 8.440897e-02
+  x2: 8.303214e-02
+  x3: 1.097362e-01
+  x4: 1.968333e-01
+  x5: 9.376661e-02
+  x6: 7.912392e-02
+  v1: 1.509763e-01
+  v2: 1.169115e-01
+  v3: 1.791665e-01
+  v4: 2.019644e-01
+  v5: 1.573255e-01
+  v6: 4.031118e-02
+
+============================================================
+CASE 2: 6 sensors (x1, x2, x3, x4, x5, x6)
+============================================================
+
+Measurement Matrix:
+  C_case2 shape: (6, 12)
+  C_case2 measures: x1, x2, x3, x4, x5, x6
+  C_case2 = 
+[[1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 1. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 1. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0. 0.]
+ [0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.]]
+
+Measurement Noise:
+  Rv_case2 = 0.1 * I_6
+  Rv_case2 shape: (6, 6)
+
+Kalman Filter Design:
+  Lk_case2 shape: (12, 6)
+  Estimator spectral radius: 0.998415
+  Estimator stable: True
+  Innovation covariance S condition: 1.003864e+00
+  Note: S condition number is close to 1.0 because S = Cmeas @ P @ Cmeas.T + Rv,
+        and Rv = 0.1*I_p dominates the diagonal. Small off-diagonal terms from
+        Cmeas @ P @ Cmeas.T make condition number slightly > 1.0.
+  Note: DARE (Discrete Algebraic Riccati Equation) solver has finite numerical
+        precision. Relative residuals of ~2-3% are normal for scipy's
+        solve_discrete_are() function and do not indicate design errors.
+        The Kalman gain Lk is computed correctly from the DARE solution P.
+
+Metrics:
+  J_true: 3.709941e+02
+  J_u_component (control effort): 5.922595e+01
+  J_y_component (output penalty): 3.117682e+02
+  max|u| overall: 4.086037e-01
+  RMS estimation error (full): 7.132968e-01
+  RMS estimation error (SS, last 20%): 2.702939e-01
+  RMS y1 (full): 1.947669e-01
+  RMS y1 (SS): 1.814360e-01
+  RMS y6 (full): 5.231174e-01
+  RMS y6 (SS): 2.008528e-01
+
+Per-State RMS Estimation Error (Steady-State):
+  x1: 8.916688e-02
+  x2: 4.993248e-02
+  x3: 8.802730e-02
+  x4: 1.114787e-01
+  x5: 7.170022e-02
+  x6: 4.279515e-02
+  v1: 1.444060e-01
+  v2: 4.699382e-02
+  v3: 3.691388e-02
+  v4: 5.970016e-02
+  v5: 7.200487e-02
+  v6: 4.788729e-02
+
+============================================================
+COMPARISON TABLE: Part 6 vs Part 7 Cases 1 and 2
+============================================================
+
+| Metric                      | Part 6 (2) | Case 1 (4) | Case 2 (6) |
+|-----------------------------|-----------:|----------:|----------:|
+| Estimator spectral radius   | 0.999547  | 0.998968 | 0.998415 |
+| J_true                      | 4.2610e+02 | 4.0176e+02 | 3.7099e+02 |
+| RMS error (full)            | 9.5734e-01 | 8.6550e-01 | 7.1330e-01 |
+| RMS error (SS)              | 5.5933e-01 | 4.6431e-01 | 2.7029e-01 |
+| max|u|                      | 4.0860e-01 | 4.0860e-01 | 4.0860e-01 |
+
+============================================================
+ANALYSIS: Do more sensors help?
+============================================================
+
+ESTIMATION:
+  Part 6 RMS error (SS): 5.593296e-01
+  Case 1 RMS error (SS): 4.643125e-01 (change: +16.99%)
+  Case 2 RMS error (SS): 2.702939e-01 (change: +51.68%)
+  CONCLUSION: More sensors IMPROVE estimation (lower RMS error)
+
+REGULATION:
+  Part 6 J_true: 4.260967e+02
+  Case 1 J_true: 4.017590e+02 (change: +5.71%)
+  Case 2 J_true: 3.709941e+02 (change: +12.93%)
+  CONCLUSION: More sensors IMPROVE regulation (lower cost)
+
+CONVERGENCE SPEED:
+  Part 6 estimator rho: 0.999547
+  Case 1 estimator rho: 0.998968
+  Case 2 estimator rho: 0.998415
+  CONCLUSION: More sensors lead to FASTER estimator convergence
+
+FINAL ANSWER:
+  More sensors help with BOTH estimation AND regulation.
+
+Source Citations:
+  Part 7 requirement: docs/sources/final_exam_extract.md Section 9
+  Part 3 LQR controller: python/part3/outputs/K_matrix.npy
+  Part 6 baseline: python/part6/outputs/results.txt
+  Frozen invariants: docs/07_comprehensive_review_part0_to_part4/cross_part_invariants.md

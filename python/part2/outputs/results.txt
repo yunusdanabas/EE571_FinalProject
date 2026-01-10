@@ -33,35 +33,35 @@ RMS Estimation Errors:
         Both reported for Part 3 comparison completeness.
 
   Displacements (x1..x6) - Full window:
-    x1: 3.533248e-08
-    x2: 3.546375e-04
-    x3: 3.686065e-01
-    x4: 4.509872e+01
-    x5: 7.495280e-02
-    x6: 5.252366e-06
-  Overall RMS (displacements, full): 4.510029e+01
+    x1: 2.102968e-07
+    x2: 1.418099e-03
+    x3: 7.554792e-01
+    x4: 4.460315e+01
+    x5: 7.452427e-02
+    x6: 5.178410e-06
+  Overall RMS (displacements, full): 4.460961e+01
 
   Displacements (x1..x6) - Steady-state window (last 20%, no-noise, float64):
-    x1: 5.619633e-17
-    x2: 3.567464e-13
-    x3: 2.026473e-10
-    x4: 1.110841e-10
-    x5: 2.105661e-13
-    x6: 3.479148e-17
-  Overall RMS (displacements, steady-state): 2.310969e-10
+    x1: 5.539905e-17
+    x2: 3.801829e-13
+    x3: 2.176104e-10
+    x4: 1.056329e-10
+    x5: 2.061215e-13
+    x6: 3.346533e-17
+  Overall RMS (displacements, steady-state): 2.418941e-10
 
-  Overall RMS (all states, full): 2.979952e+02
-  Overall RMS (all states, steady-state): 1.635892e-09
+  Overall RMS (all states, full): 2.931880e+02
+  Overall RMS (all states, steady-state): 1.720276e-09
 
 Convergence Analysis:
   Initial error norm: 1.414214e+00
-  Final error norm: 6.701764e-09
+  Final error norm: 2.243553e-09
   Error reduction: 100.00%
 
 Final Estimation Errors (displacements):
-  e1 (x1): -2.220446e-16
-  e2 (x2): -1.290468e-12
-  e3 (x3): -8.902912e-10
-  e4 (x4): -2.573275e-11
-  e5 (x5): -6.805667e-14
+  e1 (x1): -1.110223e-16
+  e2 (x2): -6.083467e-13
+  e3 (x3): -3.196772e-10
+  e4 (x4): -6.525624e-11
+  e5 (x5): -3.680389e-13
   e6 (x6): -1.110223e-16

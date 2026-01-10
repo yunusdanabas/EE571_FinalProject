@@ -123,9 +123,9 @@ From `prep_final.m`:
 
 ### Documentation Structure
 Each part has its own documentation directory:
-- `docs/01_part1/plan.md` - Implementation plan for Part 1
-- `docs/01_part1/closeout.md` - Results summary for Part 1
-- `docs/02_part2/plan.md`, `docs/02_part2/closeout.md` - Part 2
+- `docs/02_part1_observability/part1_plan.md` - Implementation plan for Part 1
+- `docs/02_part1_observability/part1_closeout.md` - Results summary for Part 1
+- `docs/03_part2_observer/part2_plan.md`, `docs/03_part2_observer/part2_closeout.md` - Part 2
 - ... (similar for Parts 3-7)
 
 ## Global Decisions
@@ -238,18 +238,36 @@ where:
 - System with process and measurement noise:
   - `x_{k+1} = A_d x_k + B_d u_k + B_d w_k` (verified from exam statement: noise enters through `B_d` per `docs/sources/final_exam_extract.md` Section 7)
   - `y_k = C_d x_k + v_k`
-- **Noise characteristics**:
-  - `v ~ N(0, 0.1 I_p)` where `p = size(C, 1)` (number of outputs for current `C`)
-  - `w ~ N(0, 0.05 I_m)` where `m = size(B, 2) = 3` (number of input channels)
-- Design Kalman filter (LQE)
+- **Noise characteristics** (frozen for Parts 5-7):
+  - `v ~ N(0, 0.1 I_p)` where `p = size(C, 1) = 2` (sensor noise covariance Rv = 0.1 × I₂)
+  - `w ~ N(0, 0.05 I_m)` where `m = size(B, 2) = 3` (actuator noise covariance Qw = 0.05 × I₃)
+  - Random seed: `seed = 42` (for reproducibility)
+- **Measurement matrix**: Uses Part 2 C matrix (Cmeas, 2×12, measures x₁ and x₆)
+- **Output definitions**:
+  - `y_true[k] = Cmeas @ x[k]` (true output, no noise)
+  - `y_meas[k] = Cmeas @ x[k] + v[k]` (measured output, with noise)
+  - `yhat[k] = Cmeas @ xhat[k]` (estimated output from Kalman filter)
+- Design steady-state Kalman filter (LQE) using DARE
 - Use initial conditions from Part 2
 - Compare real vs estimated states
+- **Metrics**: Report both tracking RMS (y_true vs yhat) and innovation RMS (y_meas vs yhat)
 
 ### Part 6: LQG (LQR + Kalman Filter)
-- Combine LQR from Part 3 with Kalman filter from Part 5
-- Simulate closed-loop system
-- **Comparison**: Compare outputs against Part 3 (LQR with deterministic observer)
-- Analyze effect of noise on regulation performance
+- Combine LQR controller (K) from Part 3 with Kalman filter (Lk) from Part 5
+- **Noise settings**: Same as Part 5 (Qw = 0.05 × I₃, Rv = 0.1 × I₂, seed = 42)
+- **Measurement matrix**: Uses Part 2 C matrix (Cmeas, 2×12, measures x₁ and x₆)
+- **Initial conditions**: Same as Part 2 (x₀, x̂₀)
+- Simulate closed-loop system with noise:
+  - Plant: `x[k+1] = Ad @ x[k] + Bd @ u[k] + Bd @ w[k]`
+  - Measurement: `y_meas[k] = Cmeas @ x[k] + v[k]`
+  - Kalman filter: `xhat[k+1] = Ad @ xhat[k] + Bd @ u[k] + Lk @ (y_meas[k] - Cmeas @ xhat[k])`
+  - Controller: `u[k] = -K @ xhat[k]` (uses estimated state)
+- **Cost computation**: 
+  - `J_true = Σ(u^T u + y_true1² + y_true6²)` using `y_true = Cmeas @ x` (does not penalize measurement noise)
+  - `J_meas = Σ(u^T u + y_meas1² + y_meas6²)` using `y_meas = Cmeas @ x + v` (penalizes noise)
+  - Official metric: `J_true` (justified: does not penalize uncontrollable measurement noise)
+- **Comparison**: Compare outputs against Part 3 (LQR with deterministic observer, no noise)
+- **Validation**: Verify K matrix matches Part 3 exactly, confirm initial conditions, log early time control magnitudes
 
 ### Part 7: Sensor Augmentation Analysis
 - **Case 1**: C matrix (4×12)
@@ -286,7 +304,7 @@ where:
    - Do not mix parts within a single session
 
 2. **Before Coding**
-   - Ensure `docs/XX_partYY/plan.md` exists for the part
+   - Ensure `docs/XX_partYY/partYY_plan.md` exists for the part
    - Review the plan and anchor document for conventions
    - Verify you understand the problem statement
 
@@ -296,7 +314,7 @@ where:
    - Apply global decisions (simulation horizon, random seed, metrics)
 
 4. **After Completion**
-   - Create `docs/XX_partYY/closeout.md` with:
+   - Create `docs/XX_partYY/partYY_closeout.md` with:
      - Results summary
      - Key findings
      - Plots and metrics
@@ -306,7 +324,7 @@ where:
    - Reference this anchor document for conventions
    - Reference `matlab/prep_final.m` for matrix definitions
    - Reference `docs/sources/final_exam.pdf` for exam statement requirements
-   - Reference part-specific plan.md for part-specific requirements
+   - Reference part-specific partX_plan.md for part-specific requirements
 
 ### File Naming Convention
 - Python: `python/part1/main.py`, `python/part2/main.py`, etc. (each part in its own directory)
@@ -322,11 +340,11 @@ where:
 
 ## Checklist for Each Part
 
-- [ ] Read part-specific plan.md
+- [ ] Read part-specific partX_plan.md
 - [ ] Verify model matrices match `prep_final.m` conventions
 - [ ] Use correct initial conditions (check problem statement)
 - [ ] Apply appropriate noise models (if applicable)
 - [ ] Compute required metrics (cost, max input, estimation error)
 - [ ] Generate plots consistent with actual outputs
-- [ ] Create closeout.md with results summary
+- [ ] Create partX_closeout.md with results summary
 

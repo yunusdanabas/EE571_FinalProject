@@ -187,8 +187,8 @@ Part 4 successfully redesigned and implemented a discrete-time infinite-horizon 
 
 ### Documentation
 
-- [x] `docs/06_part4_lqr_reduced_input/plan.md` - Implementation plan
-- [x] `docs/06_part4_lqr_reduced_input/closeout.md` - This file
+- [x] `docs/06_part4_lqr_reduced_input/part4_plan.md` - Implementation plan
+- [x] `docs/06_part4_lqr_reduced_input/part4_closeout.md` - This file
 
 ### Python Code
 

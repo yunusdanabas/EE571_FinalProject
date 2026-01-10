@@ -122,14 +122,75 @@
 
 ---
 
+### Part 5: Kalman Filter Design
+
+| Gate | Pass/Fail | Evidence Line(s) | Notes |
+|------|-----------|-------------------|-------|
+| Noise covariances: Qw = 0.05 * I3, Rv = 0.1 * I2, seed = 42 | [ ] PASS / [ ] FAIL | [Quote from console or results.txt] | |
+| Process noise entry: Noise enters via Bd (modeling choice documented) | [ ] PASS / [ ] FAIL | [Quote: "x_{k+1} = Ad @ x_k + Bd @ u_k + Bd @ w_k"] | |
+| DARE solver success for estimator | [ ] PASS / [ ] FAIL | [Quote: "DARE solved successfully"] | |
+| Lk shape (12, 2) | [ ] PASS / [ ] FAIL | [Quote: "Lk shape: (12, 2)"] | |
+| Estimator stability: spectral_radius(Ad - Lk @ Cmeas) < 1.0 | [ ] PASS / [ ] FAIL | [Quote: "Estimator spectral radius: X.XXXXXX"] | |
+| Output definitions: y_true, y_meas, yhat clearly defined | [ ] PASS / [ ] FAIL | [Quote from results.txt: "Output Definitions (Metrics)"] | |
+| Tracking RMS: RMS(y_true - yhat) reported (full and steady-state) | [ ] PASS / [ ] FAIL | [Quote from results.txt] | |
+| Innovation RMS: RMS(y_meas - yhat) reported (full and steady-state) | [ ] PASS / [ ] FAIL | [Quote from results.txt] | |
+| Steady-state metrics: Last 20% RMS metrics reported | [ ] PASS / [ ] FAIL | [Quote from results.txt: "steady-state" or "last 20%"] | |
+
+**Overall Part 5 Status:** [ ] PASS / [ ] FAIL / [ ] PARTIAL
+
+**Artifacts Verified:**
+- [ ] `python/part5/outputs/results.txt` exists
+- [ ] `python/part5/outputs/Lk_matrix.npy` exists
+- [ ] `python/part5/outputs/traj.npz` exists
+- [ ] `python/part5/outputs/outputs_y_vs_yhat.png` exists
+- [ ] `python/part5/outputs/estimation_error_norm.png` exists
+- [ ] `python/part5/outputs/estimation_error_x1_x6.png` exists
+- [ ] `python/part5/outputs/per_state_rms_bar.png` exists
+- [ ] Console log captured
+
+---
+
+### Part 6: LQG Controller (LQR + Kalman Filter)
+
+| Gate | Pass/Fail | Evidence Line(s) | Notes |
+|------|-----------|-------------------|-------|
+| K matrix fingerprint: ||K||_F, max(|K|), hash logged | [ ] PASS / [ ] FAIL | [Quote from results.txt: "K matrix fingerprint"] | |
+| K matches Part 3: K loaded from Part 3 or recomputed identically | [ ] PASS / [ ] FAIL | [Quote: "Loaded K from" or "Recomputed K"] | |
+| Lk matches Part 5: Lk loaded from Part 5 or recomputed identically | [ ] PASS / [ ] FAIL | [Quote: "Loaded Lk from" or "Recomputed Lk"] | |
+| Noise settings: Qw = 0.05 * I3, Rv = 0.1 * I2, seed = 42 | [ ] PASS / [ ] FAIL | [Quote from console or results.txt] | |
+| Controller stability: spectral_radius(Ad - Bd @ K) < 1.0 | [ ] PASS / [ ] FAIL | [Quote: "Controller spectral radius: X.XXXXXX"] | |
+| Estimator stability: spectral_radius(Ad - Lk @ Cmeas) < 1.0 | [ ] PASS / [ ] FAIL | [Quote: "Estimator spectral radius: X.XXXXXX"] | |
+| Composite spectral radius: Augmented closed-loop spectral radius logged | [ ] PASS / [ ] FAIL | [Quote from results.txt: "Composite closed-loop"] | |
+| Controller uses xhat: max ||u - (-K @ xhat)|| ≈ 0 | [ ] PASS / [ ] FAIL | [Quote: "max ||u - (-K @ xhat)||: 0.000000e+00"] | |
+| Initial conditions: x0 and xhat0 match Part 2/Part 3 | [ ] PASS / [ ] FAIL | [Quote from results.txt: "Initial Conditions"] | |
+| Cost computation: J_true (official) and J_meas (comparison) both computed | [ ] PASS / [ ] FAIL | [Quote: "Total cost J_true" and "Total cost J_meas"] | |
+| Early time control: max(|u[:,0:20]|) logged | [ ] PASS / [ ] FAIL | [Quote: "Early time control magnitudes"] | |
+| No-noise sanity check: Part 6 with w=0, v=0 documented (may not match Part 3 due to L vs Lk) | [ ] PASS / [ ] FAIL | [Quote from results.txt: "No-Noise Sanity Check"] | |
+| Comparison note: Note that Part 3 vs Part 6 is not apples-to-apples unless noise disabled | [ ] PASS / [ ] FAIL | [Quote from results.txt: "IMPORTANT: Part 3 vs Part 6 is NOT an apples-to-apples comparison"] | |
+
+**Overall Part 6 Status:** [ ] PASS / [ ] FAIL / [ ] PARTIAL
+
+**Artifacts Verified:**
+- [ ] `python/part6/outputs/results.txt` exists
+- [ ] `python/part6/outputs/traj.npz` exists
+- [ ] `python/part6/outputs/outputs_y1_y6_comparison.png` exists
+- [ ] `python/part6/outputs/outputs_y_meas_vs_yhat.png` exists
+- [ ] `python/part6/outputs/inputs_u1_u2_u3.png` exists
+- [ ] `python/part6/outputs/estimation_error_norm.png` exists
+- [ ] Console log captured
+
+---
+
 ## Cross-Part Consistency Checks
 
 | Check | Status | Evidence | Notes |
 |-------|--------|----------|-------|
 | Same Ts across parts (0.01) | [ ] PASS / [ ] FAIL / [ ] UNKNOWN | [Quote from each part's console/results] | |
-| Same Part 2 C and initial conditions used consistently in Parts 2-4 | [ ] PASS / [ ] FAIL / [ ] UNKNOWN | [Quote from results.txt of Parts 2, 3, 4] | |
-| Same N and cost conventions used in Parts 3 and 4 | [ ] PASS / [ ] FAIL / [ ] UNKNOWN | [Quote from results.txt of Parts 3 and 4] | |
+| Same Part 2 C and initial conditions used consistently in Parts 2-6 | [ ] PASS / [ ] FAIL / [ ] UNKNOWN | [Quote from results.txt of Parts 2, 3, 4, 5, 6] | |
+| Same N and cost conventions used in Parts 3, 4, and 6 | [ ] PASS / [ ] FAIL / [ ] UNKNOWN | [Quote from results.txt of Parts 3, 4, 6] | |
+| Noise settings (Qw, Rv, seed) consistent in Parts 5-6 | [ ] PASS / [ ] FAIL / [ ] UNKNOWN | [Quote from results.txt of Parts 5, 6] | |
 | Comparison table Part 3 vs Part 4 includes J and max_abs_u_overall under aligned definition | [ ] PASS / [ ] FAIL / [ ] UNKNOWN | [See comparison table below] | |
+| Comparison table Part 3 vs Part 6 includes no-noise sanity check and comparison note | [ ] PASS / [ ] FAIL / [ ] UNKNOWN | [See comparison table below] | |
 
 ### Part 3 vs Part 4 Comparison Table
 
@@ -151,6 +212,8 @@
 | Part 2 x0 and xhat0 | [Section number or UNKNOWN] | [Page number or UNKNOWN] | [ ] VERIFIED / [ ] UNKNOWN |
 | Part 3 cost definition J = Σ (u^T u + y1^2 + y6^2) | [Section number or UNKNOWN] | [Page number or UNKNOWN] | [ ] VERIFIED / [ ] UNKNOWN |
 | Part 4 instruction to remove u3 | [Section number or UNKNOWN] | [Page number or UNKNOWN] | [ ] VERIFIED / [ ] UNKNOWN |
+| Part 5 noise model (Qw, Rv, process noise via Bd) | [Section number or UNKNOWN] | [Page number or UNKNOWN] | [ ] VERIFIED / [ ] UNKNOWN |
+| Part 6 LQG requirement (LQR + Kalman filter) | [Section number or UNKNOWN] | [Page number or UNKNOWN] | [ ] VERIFIED / [ ] UNKNOWN |
 
 **Verification Method:** Checked `docs/00_anchor.md` for citations to `docs/sources/final_exam_extract.md` or `docs/sources/final_exam.pdf`.
 
@@ -191,10 +254,10 @@ List any non-standard choices (N, tolerances, etc.) that deviate from expected v
 
 ## Evidence Package Location
 
-Evidence package prepared according to Section 5 of plan.md:
+Evidence package prepared according to Section 5 of comprehensive_review_plan.md:
 - [ ] Environment information captured
 - [ ] Console outputs captured (Parts 0 and 1)
-- [ ] Full results.txt files captured (Parts 2, 3, 4)
+- [ ] Full results.txt files captured (Parts 2, 3, 4, 5, 6)
 - [ ] Directory listings captured
 - [ ] All artifacts verified to exist
 - [ ] `results_intake_template.md` filled out and ready for submission

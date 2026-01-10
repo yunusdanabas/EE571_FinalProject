@@ -1,0 +1,201 @@
+Part 5: Discrete-Time Steady-State Kalman Filter (LQE) - Results
+============================================================
+
+Reproducibility Information:
+  Python version: 3.10.18
+  NumPy version: 2.2.6
+  SciPy version: 1.15.2
+  Platform: Linux-6.8.0-90-generic-x86_64-with-glibc2.39
+  Random seed: 42
+
+Simulation Parameters:
+  N (number of input samples) = 1000
+  Ts (sampling time) = 0.01 s
+  Time span = 10.0 s
+  Array dimensions (standard convention):
+    - x: (12, N+1) stores x[0] through x[N]
+    - xhat: (12, N+1) stores xhat[0] through xhat[N]
+    - u: (3, N) stores u[0] through u[N-1]
+    - y_true: (2, N+1) stores y_true[0] through y_true[N] (true output, Cmeas @ x, no noise)
+    - y_meas: (2, N+1) stores y_meas[0] through y_meas[N] (measured output, Cmeas @ x + v, with noise)
+    - yhat: (2, N+1) stores yhat[0] through yhat[N] (estimated output, Cmeas @ xhat)
+    - w: (3, N) stores w[0] through w[N-1]
+    - v: (2, N+1) stores v[0] through v[N]
+    - innovations: (2, N) stores innovations[0] through innovations[N-1] (y_meas - yhat)
+
+Initial Conditions:
+  x0 (actual) = [0. 0. 0. 1. 1. 1. 0. 0. 0. 0. 0. 0.]
+  xhat0 (estimator) = [0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.]
+  Exact values for reproducibility:
+    x0 = [0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00, 1.000000000000000e+00, 1.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00]
+    xhat0 = [0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00, 0.000000000000000e+00]
+
+Measurement Matrix:
+  Cmeas shape: (2, 12)
+  Cmeas = 
+[[1 0 0 0 0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 1 0 0 0 0 0 0]]
+  Cmeas measures x1 and x6 (Part 2 sensor configuration)
+
+Output Definitions (Metrics):
+  y_true[k] = Cmeas @ x[k] (true output, no noise)
+  y_meas[k] = Cmeas @ x[k] + v[k] (measured output, with noise)
+  yhat[k] = Cmeas @ xhat[k] (estimated output from Kalman filter)
+  Note: For plots, 'True vs Estimated' shows y_true and yhat.
+        'Measurement vs Estimate' shows y_meas and yhat.
+        y_meas is the noisy measurement, not the true output.
+
+Noise Covariances:
+  Qw (actuator noise) shape: (3, 3)
+  Qw = 0.05 * I_3
+  Qw eigenvalues: [0.05 0.05 0.05]
+  Qw is PSD: True
+
+  Rv (sensor noise) shape: (2, 2)
+  Rv = 0.1 * I_2
+  Rv eigenvalues: [0.1 0.1]
+  Rv is PSD: True
+
+  Qx (process noise) shape: (12, 12)
+  Qx = Bd @ Qw @ Bd.T
+  Qx minimum eigenvalue: -4.235165e-22+0.000000e+00j
+  Qx maximum eigenvalue: 1.308923e-05+0.000000e+00j
+  Qx is PSD: True
+
+Kalman Filter Design:
+  Method: Steady-state Kalman filter via DARE
+  DARE: P = solve_discrete_are(Ad.T, Cmeas.T, Qx, Rv)
+  Kalman gain: Lk = P @ Cmeas.T @ inv(Cmeas @ P @ Cmeas.T + Rv)
+  Lk shape: (12, 2)
+  Innovation covariance S shape: (2, 2)
+  S condition number: 1.00e+00
+  S determinant: 1.016845e-02
+  Estimator closed-loop matrix: Aest = Ad - Lk @ Cmeas
+  Estimator spectral radius: 0.999547
+  Estimator stable: True
+  Estimator eigenvalues:
+    λ_1 = 0.999362+0.019221j (|λ| = 0.999547)
+    λ_2 = 0.999362-0.019221j (|λ| = 0.999547)
+    λ_3 = 0.998326+0.017758j (|λ| = 0.998484)
+    λ_4 = 0.998326-0.017758j (|λ| = 0.998484)
+    λ_5 = 0.998360+0.015244j (|λ| = 0.998476)
+    λ_6 = 0.998360-0.015244j (|λ| = 0.998476)
+    λ_7 = 0.998518+0.011552j (|λ| = 0.998584)
+    λ_8 = 0.998518-0.011552j (|λ| = 0.998584)
+    λ_9 = 0.998294+0.007414j (|λ| = 0.998322)
+    λ_10 = 0.998294-0.007414j (|λ| = 0.998322)
+    λ_11 = 0.998272+0.002710j (|λ| = 0.998276)
+    λ_12 = 0.998272-0.002710j (|λ| = 0.998276)
+
+  Kalman gain Lk (full matrix, 12×2):
+    Row 1: [7.849060e-03, 1.790433e-04]
+    Row 2: [3.384950e-04, 5.314604e-04]
+    Row 3: [2.739332e-03, 1.304464e-03]
+    Row 4: [1.517139e-03, 2.276095e-03]
+    Row 5: [6.554159e-04, 4.401401e-04]
+    Row 6: [1.790433e-04, 8.786290e-03]
+    Row 7: [3.094091e-03, -3.176179e-05]
+    Row 8: [-3.902404e-03, -2.812639e-04]
+    Row 9: [9.748074e-04, -6.145582e-04]
+    Row 10: [1.178649e-03, -9.196164e-04]
+    Row 11: [5.585828e-04, -1.750399e-03]
+    Row 12: [3.315658e-04, 3.878556e-03]
+
+Innovation Consistency Check:
+  Innovation covariance (theoretical) S = Cmeas @ P @ Cmeas.T + Rv:
+    Row 1: [1.00791119e-01 1.82059341e-05]
+    Row 2: [1.82059341e-05 1.00886421e-01]
+  Innovation covariance (sample) from data:
+    Row 1: [ 0.11864714 -0.00259773]
+    Row 2: [-0.00259773  0.1492535 ]
+  Mean NIS (Normalized Innovation Squared): 2.660638
+  Expected NIS (for 2-dimensional output): 2.00
+  NIS ratio (mean/expected): 1.3303
+
+RMS Metrics:
+  Overall RMS estimation error (full window): 9.607036e-01
+  Overall RMS estimation error (steady-state, last 20%): 5.312798e-01
+  Steady-state window: indices 800 to 1000 (last 20%)
+
+  Per-state RMS estimation error (full window):
+    x1: 1.816744e-01
+    x2: 2.668047e-01
+    x3: 2.767048e-01
+    x4: 3.211965e-01
+    x5: 3.254606e-01
+    x6: 2.044338e-01
+    x7: 2.637228e-01
+    x8: 2.885109e-01
+    x9: 3.002934e-01
+    x10: 2.645333e-01
+    x11: 3.086392e-01
+    x12: 2.882880e-01
+
+  Per-state RMS estimation error (steady-state):
+    x1: 1.075163e-01
+    x2: 1.463562e-01
+    x3: 2.061123e-01
+    x4: 2.443788e-01
+    x5: 1.601876e-01
+    x6: 5.154161e-02
+    x7: 2.056319e-01
+    x8: 1.134538e-01
+    x9: 8.840208e-02
+    x10: 1.435927e-01
+    x11: 1.695113e-01
+    x12: 8.021382e-02
+
+  Position RMS (x1..x6, full window):
+    x1: 1.816744e-01
+    x2: 2.668047e-01
+    x3: 2.767048e-01
+    x4: 3.211965e-01
+    x5: 3.254606e-01
+    x6: 2.044338e-01
+
+  Position RMS (x1..x6, steady-state):
+    x1: 1.075163e-01
+    x2: 1.463562e-01
+    x3: 2.061123e-01
+    x4: 2.443788e-01
+    x5: 1.601876e-01
+    x6: 5.154161e-02
+
+  Estimation error e_x1 (full window): 1.816744e-01
+  Estimation error e_x1 (steady-state): 1.075163e-01
+  Estimation error e_x6 (full window): 2.044338e-01
+  Estimation error e_x6 (steady-state): 5.154161e-02
+
+  Output tracking RMS (y_true vs yhat, full window):
+    y1: 1.816744e-01
+    y6: 2.044338e-01
+
+  Output tracking RMS (y_true vs yhat, steady-state):
+    y1: 1.075163e-01
+    y6: 5.154161e-02
+
+  Innovation RMS (y_meas vs yhat, full window):
+    y1: 3.442959e-01
+    y6: 3.868232e-01
+
+  Innovation RMS (y_meas vs yhat, steady-state):
+    y1: 3.185350e-01
+    y6: 3.005188e-01
+
+  Note: Tracking RMS (y_true vs yhat) measures how well filter tracks true output.
+        Innovation RMS (y_meas vs yhat) measures measurement residual.
+
+Reproducibility - Noise Samples:
+  First 3 samples of w (process noise):
+    w[0] = [1.110686611519348e-01, -3.091683762802727e-02, 1.448275599440611e-01]
+    w[1] = [-5.235461517833095e-02, 3.531227206413361e-01, 1.716036222680044e-01]
+    w[2] = [-1.036233463104781e-01, -1.041403388127320e-01, 5.410440872119168e-02]
+  First 3 samples of v (measurement noise):
+    v[0] = [4.816243290688553e-01, -7.404579859406406e-02]
+    v[1] = [-1.484608362663367e-01, 1.715725505131878e-01]
+    v[2] = [-6.050323375322846e-01, -5.454669127382026e-01]
+
+Source Citations:
+  Part 5 requirement: docs/sources/final_exam_extract.md Section 7
+  Part 2 C matrix and initial conditions: docs/sources/final_exam_extract.md Section 4
+  Frozen invariants: docs/07_comprehensive_review_part0_to_part4/cross_part_invariants.md

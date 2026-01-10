@@ -197,8 +197,8 @@ Identify MATLAB functions for later validation (not implemented in this plan):
 
 ### Documentation
 
-- **`docs/02_part1_observability/plan.md`**: This plan document
-- **`docs/02_part1_observability/closeout.md`**: Results summary (to be created after implementation)
+- **`docs/02_part1_observability/part1_plan.md`**: This plan document
+- **`docs/02_part1_observability/part1_closeout.md`**: Results summary (to be created after implementation)
 
 ### Python Code Structure
 

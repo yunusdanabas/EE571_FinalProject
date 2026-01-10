@@ -545,5 +545,5 @@ Before considering the audit complete, verify:
 - [ ] Part 1 executed and all checks completed (Section E)
 - [ ] Part 2 executed and all checks completed (Section F)
 - [ ] All artifacts documented
-- [ ] Closeout document (`closeout.md`) completed with all results
+- [ ] Closeout document (`progress_audit_closeout.md`) completed with all results
 

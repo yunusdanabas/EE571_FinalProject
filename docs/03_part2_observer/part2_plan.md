@@ -236,8 +236,8 @@
 
 ### Documentation
 
-- **`docs/03_part2_observer/plan.md`**: This plan document
-- **`docs/03_part2_observer/closeout.md`**: Results summary (to be created after implementation)
+- **`docs/03_part2_observer/part2_plan.md`**: This plan document
+- **`docs/03_part2_observer/part2_closeout.md`**: Results summary (to be created after implementation)
 - **Update `docs/00_anchor.md`**: Only if mismatches discovered in Part 2 `C` matrix or initial conditions relative to current anchor document
 
 ### Python Code Structure

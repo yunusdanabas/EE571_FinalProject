@@ -2,9 +2,9 @@ Part 4: LQR Controller Design with Reduced Input (u3 Removed) - Results
 ============================================================
 
 Reproducibility Information:
-  Python version: 3.12.11
-  NumPy version: 2.3.3
-  SciPy version: 1.16.2
+  Python version: 3.10.18
+  NumPy version: 2.2.6
+  SciPy version: 1.15.2
   Platform: Linux-6.8.0-90-generic-x86_64-with-glibc2.39
 
 Simulation Parameters:
@@ -102,33 +102,45 @@ Controller Validation:
   Control law: u_red[k] = -K_red @ xhat[k]
   CRITICAL: Controller uses xhat (estimated states), not x (true states)
   Validation: u_red[k] computed from xhat[k] for all k ✓
-  Diagnostic (first 100 samples): max ||u_red - (-K_red @ x)|| = 3.344406e+03
-  Diagnostic (final sample k=999): ||u_red - (-K_red @ x)|| = 7.781734e-10
-  Diagnostic (overall): max ||u_red - (-K_red @ x)|| = 3.344406e+03
+  Diagnostic (first 100 samples): max ||u_red - (-K_red @ x)|| = 3.356976e+03
+  Diagnostic (final sample k=999): ||u_red - (-K_red @ x)|| = 1.648437e-09
+  Diagnostic (overall): max ||u_red - (-K_red @ x)|| = 3.356976e+03
   Note: Non-zero values confirm u_red uses xhat, even after observer convergence
 
 Simulation Results:
-  Max absolute state magnitude: 1.032589e+02
-  Max absolute input magnitude: 3.310572e+03
-  Max estimation error norm ||x - xhat||: 4.110371e+03
+  Max absolute state magnitude: 1.031454e+02
+  Max absolute input magnitude: 3.321916e+03
+  Max estimation error norm ||x - xhat||: 4.052057e+03
   End-of-window outputs:
-    |y1[N]| = 1.455848e-01 (final output at time N)
-    |y6[N]| = 1.549996e-01 (final output at time N)
+    |y1[N]| = 1.455103e-01 (final output at time N)
+    |y6[N]| = 1.552307e-01 (final output at time N)
   Steady-state metrics (last 20% of state samples, indices 800 to 1000):
-    y1 mean absolute: 1.917718e-01, RMS: 1.952750e-01
-    y6 mean absolute: 1.254874e-01, RMS: 1.388320e-01
+    y1 mean absolute: 1.917913e-01, RMS: 1.953038e-01
+    y6 mean absolute: 1.255567e-01, RMS: 1.389106e-01
+
+Slow Convergence Analysis:
+  Closed-loop spectral radius ρ(Acl_red): 0.999518
+  Stability margin: 4.820627e-04 (distance from unity)
+  Dominant eigenvalue magnitude: 0.999518
+  Dominant eigenvalue angle: 0.019116 rad (1.10 deg)
+  End-of-window outputs: |y1[N]| = 1.455103e-01, |y6[N]| = 1.552307e-01
+  Steady-state (last 20%): y1 RMS = 1.953038e-01, y6 RMS = 1.389106e-01
+  NOTE: Spectral radius is very close to 1.0, indicating slow convergence.
+    System may not fully settle within the 10 s simulation window.
+    End-of-window and last-20% metrics are reported as standard.
+    System is stable (ρ < 1.0) but convergence is slow.
 
 Cost Metrics:
-  Total cost J_red = 5.838118e+07
+  Total cost J_red = 5.844240e+07
   Cost range: k = 0 to 999 (inclusive)
   Cost implementation: stage_cost[k] = u_red[k]^T @ u_red[k] + y_cost[0]^2 + y_cost[1]^2
     where y_cost = Cy @ x[k] (plant output at time k, not estimated)
     Standard convention: u_red[k] pairs with transition from x[k] to x[k+1] ✓
     Consistency verified: u_red[k] and y[k] from same time index k ✓
-  Max |u1| = 3.310572e+03
-  Max |u2| = 4.921896e+01
-  Max |u_red| overall = 3.310572e+03 (aligned with Part 3: max(abs(u)) across all elements)
-  Max ||u_red[k]||_inf = 3.310572e+03
+  Max |u1| = 3.321916e+03
+  Max |u2| = 4.631007e+01
+  Max |u_red| overall = 3.321916e+03 (aligned with Part 3: max(abs(u)) across all elements)
+  Max ||u_red[k]||_inf = 3.321916e+03
 
 Part 2 Observer (Reused):
   Observer gain L shape: (12, 2)
@@ -142,20 +154,20 @@ Part 2 Observer (Reused):
 
 Comparison Against Part 3:
   Part 3 baseline loaded successfully from python/part3/outputs/results.txt
-  Part3_J = 3.915420e+07
-  Part4_J = 5.838118e+07
-  delta_J = Part4_J - Part3_J = 1.922698e+07
-  Relative change: 49.11%
+  Part3_J = 3.918117e+07
+  Part4_J = 5.844240e+07
+  delta_J = Part4_J - Part3_J = 1.926123e+07
+  Relative change: 49.16%
 
   Maximum Input Magnitudes:
-    Part3_max_abs_u1 = 1.228057e+03
-    Part4_max_abs_u1 = 3.310572e+03
-    Part3_max_abs_u2 = 2.700929e+01
-    Part4_max_abs_u2 = 4.921896e+01
-    Part3_max_abs_u3 = 2.403429e+03 (not applicable to Part 4)
-    Part3_max_abs_u_overall = 2.403429e+03
-    Part4_max_abs_u_overall = 3.310572e+03 (aligned metric: max(abs(u_red)))
-    Part4_max ||u_red[k]||_inf = 3.310572e+03 (additional metric)
+    Part3_max_abs_u1 = 1.233096e+03
+    Part4_max_abs_u1 = 3.321916e+03
+    Part3_max_abs_u2 = 2.645949e+01
+    Part4_max_abs_u2 = 4.631007e+01
+    Part3_max_abs_u3 = 2.410433e+03 (not applicable to Part 4)
+    Part3_max_abs_u_overall = 2.410433e+03
+    Part4_max_abs_u_overall = 3.321916e+03 (aligned metric: max(abs(u_red)))
+    Part4_max ||u_red[k]||_inf = 3.321916e+03 (additional metric)
 
 Source Citations:
   Part 4 requirement: docs/sources/final_exam_extract.md Section 6

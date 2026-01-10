@@ -2,9 +2,9 @@ Part 3: LQR Controller Design with Observer - Results
 ============================================================
 
 Reproducibility Information:
-  Python version: 3.12.11
-  NumPy version: 2.3.3
-  SciPy version: 1.16.2
+  Python version: 3.10.18
+  NumPy version: 2.2.6
+  SciPy version: 1.15.2
   Platform: Linux-6.8.0-90-generic-x86_64-with-glibc2.39
 
 Simulation Parameters:
@@ -19,7 +19,7 @@ Simulation Parameters:
     - Cost range: k = 0 to 999 (inclusive, all N input samples)
     - Standard convention: u[k] pairs with transition from x[k] to x[k+1]
     - All N inputs are applied (u[0] through u[N-1])
-    - u[:, 999] norm: 8.231464e-02
+    - u[:, 999] norm: 8.231344e-02
 
 Initial Conditions:
   x0 (actual) = [0. 0. 0. 1. 1. 1. 0. 0. 0. 0. 0. 0.]
@@ -101,37 +101,47 @@ Controller Validation:
   Control law: u[k] = -K @ xhat[k]
   CRITICAL: Controller uses xhat (estimated states), not x (true states)
   Validation: u[k] computed from xhat[k] for all k ✓
-  Diagnostic (first 100 samples): max ||u - (-K @ x)|| = 2.732463e+03
-  Diagnostic (final sample k=999): ||u - (-K @ x)|| = 5.362710e-10
+  Diagnostic (first 100 samples): max ||u - (-K @ x)|| = 2.742256e+03
+  Diagnostic (final sample k=999): ||u - (-K @ x)|| = 1.240092e-09
     Note: u has length N (u[0..N-1]), x has length N+1 (x[0..N])
-  Diagnostic (overall): max ||u - (-K @ x)|| = 2.732463e+03
+  Diagnostic (overall): max ||u - (-K @ x)|| = 2.742256e+03
   Note: Non-zero values confirm u uses xhat, even after observer convergence
 
 Simulation Results:
-  Max absolute state magnitude: 1.130099e+02
-  Max absolute input magnitude: 2.403429e+03
-  Max estimation error norm ||x - xhat||: 4.110371e+03
+  Max absolute state magnitude: 1.128698e+02
+  Max absolute input magnitude: 2.410433e+03
+  Max estimation error norm ||x - xhat||: 4.052057e+03
   End-of-window outputs:
-    |y1[N]| = 1.311757e-01 (final output at time N)
-    |y6[N]| = 8.412790e-02 (final output at time N)
+    |y1[N]| = 1.311293e-01 (final output at time N)
+    |y6[N]| = 8.416707e-02 (final output at time N)
   Steady-state metrics (last 20% of state samples, indices 800 to 1000):
-    y1 mean absolute: 1.129701e-01, RMS: 1.150531e-01
-    y6 mean absolute: 1.046755e-01, RMS: 1.256718e-01
-  Note: Small stability margin (5.371081e-04) may cause slow convergence
-        End-of-window metrics indicate system not fully settled
+    y1 mean absolute: 1.129783e-01, RMS: 1.150560e-01
+    y6 mean absolute: 1.046285e-01, RMS: 1.255972e-01
+
+Slow Convergence Analysis:
+  Closed-loop spectral radius ρ(Acl): 0.999463
+  Stability margin: 5.371081e-04 (distance from unity)
+  Dominant eigenvalue magnitude: 0.999463
+  Dominant eigenvalue angle: 0.019076 rad (1.09 deg)
+  End-of-window outputs: |y1[N]| = 1.311293e-01, |y6[N]| = 8.416707e-02
+  Steady-state (last 20%): y1 RMS = 1.150560e-01, y6 RMS = 1.255972e-01
+  NOTE: Spectral radius is very close to 1.0, indicating slow convergence.
+    System may not fully settle within the 10 s simulation window.
+    End-of-window and last-20% metrics are reported as standard.
+    System is stable (ρ < 1.0) but convergence is slow.
 
 Cost Metrics:
-  Total cost J = 3.915420e+07
+  Total cost J = 3.918117e+07
   Cost range: k = 0 to 999 (inclusive)
   Cost implementation: stage_cost[k] = u[k]^T @ u[k] + y_cost[0]^2 + y_cost[1]^2
     where y_cost = Cy @ x[k] (plant output at time k, not estimated)
     Standard convention: u[k] pairs with transition from x[k] to x[k+1] ✓
     Consistency verified: u[k] and y[k] from same time index k ✓
-  Max |u1| = 1.228057e+03
-  Max |u2| = 2.700929e+01
-  Max |u3| = 2.403429e+03
-  Max |u| overall = 2.403429e+03
-  Max ||u[k]||_inf = 2.403429e+03
+  Max |u1| = 1.233096e+03
+  Max |u2| = 2.645949e+01
+  Max |u3| = 2.410433e+03
+  Max |u| overall = 2.410433e+03
+  Max ||u[k]||_inf = 2.410433e+03
 
 Part 2 Observer (Reused):
   Observer gain L shape: (12, 2)
@@ -140,7 +150,7 @@ Part 2 Observer (Reused):
   Observer closed-loop matrix: Aobs = Ad - L @ Cmeas
   Observer closed-loop spectral radius: 0.800000
   Observer design reproducibility:
-    SciPy version: 1.16.2
+    SciPy version: 1.15.2
     Placement method: YT
     Desired poles: 12 poles in range [0.400, 0.800]
       Max desired magnitude: 0.800000
@@ -160,18 +170,18 @@ Part 2 Observer (Reused):
     Achieved poles: 12 eigenvalues
       Max achieved magnitude: 0.800000
       Achieved poles (full list):
-        λ_achieved_1 = 0.400000 (|λ| = 0.400000)
-        λ_achieved_2 = 0.800000 (|λ| = 0.800000)
-        λ_achieved_3 = 0.763636 (|λ| = 0.763636)
-        λ_achieved_4 = 0.436361 (|λ| = 0.436361)
-        λ_achieved_5 = 0.727273 (|λ| = 0.727273)
-        λ_achieved_6 = 0.690909 (|λ| = 0.690909)
-        λ_achieved_7 = 0.654545 (|λ| = 0.654545)
-        λ_achieved_8 = 0.618183 (|λ| = 0.618183)
-        λ_achieved_9 = 0.472733 (|λ| = 0.472733)
-        λ_achieved_10 = 0.581805 (|λ| = 0.581805)
-        λ_achieved_11 = 0.545450 (|λ| = 0.545450)
-        λ_achieved_12 = 0.509092 (|λ| = 0.509092)
+        λ_achieved_1 = 0.400005 (|λ| = 0.400005)
+        λ_achieved_2 = 0.436360 (|λ| = 0.436360)
+        λ_achieved_3 = 0.472722 (|λ| = 0.472722)
+        λ_achieved_4 = 0.800000 (|λ| = 0.800000)
+        λ_achieved_5 = 0.509100 (|λ| = 0.509100)
+        λ_achieved_6 = 0.763636 (|λ| = 0.763636)
+        λ_achieved_7 = 0.545456 (|λ| = 0.545456)
+        λ_achieved_8 = 0.581791 (|λ| = 0.581791)
+        λ_achieved_9 = 0.618161 (|λ| = 0.618161)
+        λ_achieved_10 = 0.727273 (|λ| = 0.727273)
+        λ_achieved_11 = 0.654553 (|λ| = 0.654553)
+        λ_achieved_12 = 0.690909 (|λ| = 0.690909)
   Measurement matrix Cmeas shape: (2, 12)
   Cmeas measures x1 and x6 (Part 2 sensor configuration)
   Note: Observer redesigned using same method/parameters as Part 2 for consistency

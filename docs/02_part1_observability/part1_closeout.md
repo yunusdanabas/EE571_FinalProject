@@ -7,8 +7,8 @@ Part 1 successfully analyzed the observability of the discrete-time system with 
 ## Deliverables Completed
 
 ### Documentation
-- [x] `docs/02_part1_observability/plan.md` - Implementation plan
-- [x] `docs/02_part1_observability/closeout.md` - This file
+- [x] `docs/02_part1_observability/part1_plan.md` - Implementation plan
+- [x] `docs/02_part1_observability/part1_closeout.md` - This file
 
 ### Python Modules (`python/part1/`)
 - [x] `observability_rank.py` - Observability matrix construction and rank analysis

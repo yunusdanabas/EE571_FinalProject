@@ -1,6 +1,6 @@
 # Comprehensive Review Results Intake Template
 
-**Instructions:** Fill out this template with evidence from your review of Parts 0-4. Paste the complete filled template into ChatGPT for evaluation. Do not modify the structure of this template.
+**Instructions:** Fill out this template with evidence from your review of Parts 0-6. Paste the complete filled template into ChatGPT for evaluation. Do not modify the structure of this template.
 
 ---
 
@@ -190,6 +190,79 @@
 
 ---
 
+## Part 5: Kalman Filter Design
+
+### Full results.txt
+
+```
+[Paste the COMPLETE contents of python/part5/outputs/results.txt here]
+```
+
+### Key Console Output Excerpts (if not in results.txt)
+
+```
+[Paste any additional key lines from console output not captured in results.txt]
+```
+
+### Artifact Checklist
+
+- [ ] `python/part5/outputs/results.txt` exists
+- [ ] `python/part5/outputs/Lk_matrix.npy` exists
+- [ ] `python/part5/outputs/traj.npz` exists
+- [ ] `python/part5/outputs/outputs_y_vs_yhat.png` exists
+- [ ] `python/part5/outputs/estimation_error_norm.png` exists
+- [ ] `python/part5/outputs/estimation_error_x1_x6.png` exists
+- [ ] `python/part5/outputs/per_state_rms_bar.png` exists
+- [ ] Console log captured
+
+### Directory Listing
+
+```
+[Paste output of: ls -la python/part5/outputs/]
+```
+
+### Notes
+
+[Add any additional notes about Part 5 execution or results]
+
+---
+
+## Part 6: LQG Controller (LQR + Kalman Filter)
+
+### Full results.txt
+
+```
+[Paste the COMPLETE contents of python/part6/outputs/results.txt here]
+```
+
+### Key Console Output Excerpts (if not in results.txt)
+
+```
+[Paste any additional key lines from console output not captured in results.txt]
+```
+
+### Artifact Checklist
+
+- [ ] `python/part6/outputs/results.txt` exists
+- [ ] `python/part6/outputs/traj.npz` exists
+- [ ] `python/part6/outputs/outputs_y1_y6_comparison.png` exists
+- [ ] `python/part6/outputs/outputs_y_meas_vs_yhat.png` exists
+- [ ] `python/part6/outputs/inputs_u1_u2_u3.png` exists
+- [ ] `python/part6/outputs/estimation_error_norm.png` exists
+- [ ] Console log captured
+
+### Directory Listing
+
+```
+[Paste output of: ls -la python/part6/outputs/]
+```
+
+### Notes
+
+[Add any additional notes about Part 6 execution or results]
+
+---
+
 ## Cross-Part Consistency Summary
 
 ### Sampling Time Consistency
@@ -207,7 +280,7 @@
 
 **Evidence:**
 ```
-[Quote evidence from Parts 2, 3, 4 showing consistent C matrix and initial conditions]
+[Quote evidence from Parts 2, 3, 4, 5, 6 showing consistent C matrix and initial conditions]
 ```
 
 ### Cost Convention Consistency (Parts 3 and 4)
@@ -225,6 +298,17 @@
 |--------|--------|--------|------------|-------|
 | Total cost J | [value] | [value] | [difference] | [notes] |
 | max_abs_u_overall | [value] | [value] | [difference] | [notes] |
+
+### Part 3 vs Part 6 Comparison (Noise Impact)
+
+| Metric | Part 3 (No Noise) | Part 6 (LQG, with noise) | Difference | Notes |
+|--------|-------------------|--------------------------|------------|-------|
+| Total cost J_true (official) | [value] | [value] | [difference] | J_true does not penalize measurement noise |
+| Total cost J_meas (comparison) | N/A | [value] | N/A | J_meas includes noise penalty |
+| max_abs_u_overall | [value] | [value] | [difference] | [notes] |
+| No-noise sanity check | N/A | [PASS/FAIL] | N/A | Part 6 with w=0, v=0 matches Part 3 |
+
+**Note:** Part 3 vs Part 6 is not an apples-to-apples comparison unless noise is disabled. The no-noise sanity check verifies that Part 6 implementation matches Part 3 when noise is removed.
 
 ---
 

@@ -328,8 +328,8 @@ python python/part2/run_observer_sim.py
 ### Audit Artifacts
 
 - [ ] `docs/04_progress_audit/pip_freeze_audit.txt`
-- [ ] `docs/04_progress_audit/plan.md` (this audit plan)
-- [ ] `docs/04_progress_audit/closeout.md` (this document)
+- [ ] `docs/04_progress_audit/progress_audit_plan.md` (this audit plan)
+- [ ] `docs/04_progress_audit/progress_audit_closeout.md` (this document)
 
 ---
 

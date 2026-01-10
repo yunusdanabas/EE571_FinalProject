@@ -7,8 +7,8 @@ Part 0 successfully established the repository structure, created reusable Pytho
 ## Deliverables Completed
 
 ### Documentation
-- [x] `docs/01_part0_workspace/plan.md` - Implementation plan
-- [x] `docs/01_part0_workspace/closeout.md` - This file
+- [x] `docs/01_part0_workspace/part0_plan.md` - Implementation plan
+- [x] `docs/01_part0_workspace/part0_closeout.md` - This file
 
 ### Python Utilities (`python/utils/`)
 - [x] `build_model.py` - Model construction and ZOH discretization

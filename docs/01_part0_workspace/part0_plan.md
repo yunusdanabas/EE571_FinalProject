@@ -61,8 +61,8 @@ The repository structure must align with conventions specified in `docs/00_ancho
 ├── docs/
 │   ├── 00_anchor.md                    # Global conventions and reference
 │   ├── 01_part0_workspace/
-│   │   ├── plan.md                     # This file
-│   │   └── closeout.md                 # Results summary (to be created)
+│   │   ├── part0_plan.md               # This file
+│   │   └── part0_closeout.md           # Results summary (to be created)
 │   └── sources/                        # TODO: Create and move final_exam.pdf here
 │       └── final_exam.pdf
 ├── python/
@@ -243,8 +243,8 @@ The repository structure must align with conventions specified in `docs/00_ancho
 
 ### Documentation
 
-- [x] `docs/01_part0_workspace/plan.md` (this file)
-- [ ] `docs/01_part0_workspace/closeout.md` (results summary after completion)
+- [x] `docs/01_part0_workspace/part0_plan.md` (this file)
+- [ ] `docs/01_part0_workspace/part0_closeout.md` (results summary after completion)
 
 ### Python Code
 
@@ -346,7 +346,7 @@ The following items are documented in `docs/00_anchor.md` but require verificati
 After completing Part 0:
 
 1. Verify all deliverables are in place
-2. Run validation checklist and document results in `closeout.md`
+2. Run validation checklist and document results in `part0_closeout.md`
 3. Proceed to Part 1 (Observability Analysis) using established utilities
 
 ---

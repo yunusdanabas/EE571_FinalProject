@@ -1,8 +1,8 @@
-# Comprehensive Review Plan: Parts 0-4
+# Comprehensive Review Plan: Parts 0-6
 
 ## Purpose
 
-This document provides a strict step-by-step procedure for conducting a comprehensive, verification-first review of EE571 Final Project progress from Part 0 through Part 4. This is an audit and evaluation workflow. **Do not implement new features beyond minimal instrumentation needed to reproduce and record evidence. Do not start Part 5 or later.**
+This document provides a strict step-by-step procedure for conducting a comprehensive, verification-first review of EE571 Final Project progress from Part 0 through Part 6. This is an audit and evaluation workflow. **Do not implement new features beyond minimal instrumentation needed to reproduce and record evidence.**
 
 ## Section 1: Preconditions and Environment Freeze
 
@@ -102,7 +102,7 @@ For each item below, check if `docs/00_anchor.md` cites `docs/sources/final_exam
    - Status: [ ] VERIFIED / [ ] UNKNOWN
    - Evidence line: [quote from anchor.md or mark UNKNOWN]
 
-**Record findings in closeout.md traceability table.**
+**Record findings in comprehensive_review_closeout.md traceability table.**
 
 ---
 
@@ -319,6 +319,113 @@ python python/part4/run_lqr_reduced_input.py
 
 ---
 
+### Part 5: Kalman Filter Design
+
+**Command to run:**
+```bash
+python python/part5/run_kalman_filter.py
+```
+
+**Required output files:**
+- `python/part5/outputs/results.txt`
+- `python/part5/outputs/Lk_matrix.npy`
+- `python/part5/outputs/traj.npz`
+- `python/part5/outputs/outputs_y_vs_yhat.png`
+- `python/part5/outputs/estimation_error_norm.png`
+- `python/part5/outputs/estimation_error_x1_x6.png`
+- `python/part5/outputs/per_state_rms_bar.png`
+
+**Required log lines to capture:**
+- Noise covariances: Qw = 0.05 * I3, Rv = 0.1 * I2, seed = 42
+- DARE solver success for Kalman filter
+- Lk matrix shape: "Lk shape: (12, 2)"
+- Estimator spectral radius: "Estimator spectral radius: X.XXXXXX" (must be < 1.0)
+- Output definitions: y_true, y_meas, yhat clearly defined
+- RMS metrics: Tracking RMS (y_true vs yhat) and Innovation RMS (y_meas vs yhat)
+- Steady-state metrics (last 20% window)
+
+**Explicit Pass/Fail Gates:**
+
+| Gate | Pass Criteria | Evidence Location |
+|------|---------------|-------------------|
+| Noise covariances | Qw = 0.05 * I3, Rv = 0.1 * I2, seed = 42 | Console or results.txt: explicit values |
+| Process noise entry | Noise enters via Bd (modeling choice documented) | results.txt: "x_{k+1} = Ad @ x_k + Bd @ u_k + Bd @ w_k" |
+| DARE solver | DARE solved successfully for estimator | Console: "DARE solved successfully" |
+| Lk shape | Lk matrix shape is (12, 2) | Console or results.txt: "Lk shape: (12, 2)" |
+| Estimator stability | spectral_radius(Ad - Lk @ Cmeas) < 1.0 | Console or results.txt: "Estimator spectral radius: X.XXXXXX" (must be < 1.0) |
+| Output definitions | y_true, y_meas, yhat clearly defined in results.txt | results.txt: "Output Definitions (Metrics)" section |
+| Tracking RMS | RMS(y_true - yhat) reported (full and steady-state) | results.txt: "Output tracking RMS (y_true vs yhat)" |
+| Innovation RMS | RMS(y_meas - yhat) reported (full and steady-state) | results.txt: "Innovation RMS (y_meas vs yhat)" |
+| Steady-state metrics | Last 20% RMS metrics reported | results.txt: "steady-state" or "last 20%" metrics |
+
+**Artifacts checklist:**
+- [ ] `python/part5/outputs/results.txt` exists
+- [ ] `python/part5/outputs/Lk_matrix.npy` exists
+- [ ] `python/part5/outputs/traj.npz` exists
+- [ ] `python/part5/outputs/outputs_y_vs_yhat.png` exists
+- [ ] `python/part5/outputs/estimation_error_norm.png` exists
+- [ ] `python/part5/outputs/estimation_error_x1_x6.png` exists
+- [ ] `python/part5/outputs/per_state_rms_bar.png` exists
+- [ ] Console log captured
+
+---
+
+### Part 6: LQG Controller (LQR + Kalman Filter)
+
+**Command to run:**
+```bash
+python python/part6/run_lqg.py
+```
+
+**Required output files:**
+- `python/part6/outputs/results.txt`
+- `python/part6/outputs/traj.npz`
+- `python/part6/outputs/outputs_y1_y6_comparison.png`
+- `python/part6/outputs/outputs_y_meas_vs_yhat.png`
+- `python/part6/outputs/inputs_u1_u2_u3.png`
+- `python/part6/outputs/estimation_error_norm.png`
+
+**Required log lines to capture:**
+- K matrix fingerprint: ||K||_F, max(|K|), hash
+- Lk matrix loaded from Part 5
+- Noise settings: Qw = 0.05 * I3, Rv = 0.1 * I2, seed = 42
+- Controller spectral radius: "Controller spectral radius: X.XXXXXX"
+- Estimator spectral radius: "Estimator spectral radius: X.XXXXXX"
+- Composite closed-loop spectral radius (augmented system)
+- Part 3 baseline recreation and verification
+- Cost computed two ways: J_true (official) and J_meas (comparison)
+- Early time control magnitudes: max(|u[:,0:20]|)
+- No-noise sanity check: Part 6 with w=0, v=0 matches Part 3
+
+**Explicit Pass/Fail Gates:**
+
+| Gate | Pass Criteria | Evidence Location |
+|------|---------------|-------------------|
+| K matrix fingerprint | ||K||_F, max(|K|), hash logged | results.txt: "K matrix fingerprint" section |
+| K matches Part 3 | K loaded from Part 3 or recomputed identically | Console: "Loaded K from" or "Recomputed K" |
+| Lk matches Part 5 | Lk loaded from Part 5 or recomputed identically | Console: "Loaded Lk from" or "Recomputed Lk" |
+| Noise settings | Qw = 0.05 * I3, Rv = 0.1 * I2, seed = 42 | Console or results.txt: explicit values |
+| Controller stability | spectral_radius(Ad - Bd @ K) < 1.0 | Console or results.txt: "Controller spectral radius: X.XXXXXX" (must be < 1.0) |
+| Estimator stability | spectral_radius(Ad - Lk @ Cmeas) < 1.0 | Console or results.txt: "Estimator spectral radius: X.XXXXXX" (must be < 1.0) |
+| Composite spectral radius | Augmented closed-loop spectral radius logged | results.txt: "Composite closed-loop" section |
+| Controller uses xhat | max ||u - (-K @ xhat)|| ≈ 0 | Console or results.txt: "max ||u - (-K @ xhat)||: 0.000000e+00" |
+| Initial conditions | x0 and xhat0 match Part 2/Part 3 | results.txt: "Initial Conditions" section |
+| Cost computation | J_true (official) and J_meas (comparison) both computed | results.txt: "Total cost J_true" and "Total cost J_meas" |
+| Early time control | max(|u[:,0:20]|) logged | results.txt: "Early time control magnitudes" |
+| No-noise sanity check | Part 6 with w=0, v=0 matches Part 3 within tolerance | results.txt: "No-noise sanity check" section |
+| Comparison note | Note that Part 3 vs Part 6 is not apples-to-apples unless noise disabled | results.txt: explicit note in comparison section |
+
+**Artifacts checklist:**
+- [ ] `python/part6/outputs/results.txt` exists
+- [ ] `python/part6/outputs/traj.npz` exists
+- [ ] `python/part6/outputs/outputs_y1_y6_comparison.png` exists
+- [ ] `python/part6/outputs/outputs_y_meas_vs_yhat.png` exists
+- [ ] `python/part6/outputs/inputs_u1_u2_u3.png` exists
+- [ ] `python/part6/outputs/estimation_error_norm.png` exists
+- [ ] Console log captured
+
+---
+
 ## Section 4: Cross-Part Consistency Checks
 
 ### 4.1 Sampling Time Consistency
@@ -331,6 +438,8 @@ python python/part4/run_lqr_reduced_input.py
 - Part 2: Console log or results.txt: `Ts = 0.01`
 - Part 3: Console log or results.txt: `Ts = 0.01`
 - Part 4: Console log or results.txt: `Ts = 0.01`
+- Part 5: Console log or results.txt: `Ts = 0.01`
+- Part 6: Console log or results.txt: `Ts = 0.01`
 
 **Status:** [ ] PASS / [ ] FAIL / [ ] UNKNOWN
 
@@ -340,12 +449,14 @@ python python/part4/run_lqr_reduced_input.py
 
 ### 4.2 Part 2 C Matrix and Initial Conditions Consistency
 
-**Check:** Parts 2, 3, and 4 all use the same C matrix (measuring x1 and x6) and the same initial conditions (x0 and xhat0).
+**Check:** Parts 2, 3, 4, 5, and 6 all use the same C matrix (measuring x1 and x6) and the same initial conditions (x0 and xhat0).
 
 **Evidence locations:**
 - Part 2: results.txt: "Cd_new shape: (2, 12)" and initial conditions
 - Part 3: results.txt: C matrix and initial conditions (should match Part 2)
 - Part 4: results.txt: C matrix and initial conditions (should match Part 2)
+- Part 5: results.txt: C matrix and initial conditions (should match Part 2)
+- Part 6: results.txt: C matrix and initial conditions (should match Part 2)
 
 **Status:** [ ] PASS / [ ] FAIL / [ ] UNKNOWN
 
@@ -415,6 +526,8 @@ Create a package containing the following items for evaluation:
 - Part 2: Complete `python/part2/outputs/results.txt`
 - Part 3: Complete `python/part3/outputs/results.txt`
 - Part 4: Complete `python/part4/outputs/results.txt`
+- Part 5: Complete `python/part5/outputs/results.txt`
+- Part 6: Complete `python/part6/outputs/results.txt`
 
 **4. Directory Listings**
 For each part's outputs folder:
@@ -424,6 +537,8 @@ ls -la python/part1/outputs/
 ls -la python/part2/outputs/
 ls -la python/part3/outputs/
 ls -la python/part4/outputs/
+ls -la python/part5/outputs/
+ls -la python/part6/outputs/
 ```
 
 **5. Artifact Verification**
@@ -438,6 +553,8 @@ ls -la python/part4/outputs/
 - [ ] Part 2 results.txt captured (full file)
 - [ ] Part 3 results.txt captured (full file)
 - [ ] Part 4 results.txt captured (full file)
+- [ ] Part 5 results.txt captured (full file)
+- [ ] Part 6 results.txt captured (full file)
 - [ ] Directory listings captured for all parts
 - [ ] All required artifacts verified to exist
 
@@ -456,17 +573,19 @@ Use `results_intake_template.md` to format evidence for submission. Fill in all 
 5. Run Part 2, verify gates, capture evidence
 6. Run Part 3, verify gates, capture evidence
 7. Run Part 4, verify gates, capture evidence
-8. Complete Section 4 (Cross-Part Consistency Checks)
-9. Complete Section 5 (Package Evidence)
-10. Fill out `closeout.md` with all findings
-11. Fill out `results_intake_template.md` with evidence
-12. Submit `results_intake_template.md` for evaluation
+8. Run Part 5, verify gates, capture evidence
+9. Run Part 6, verify gates, capture evidence
+10. Complete Section 4 (Cross-Part Consistency Checks)
+11. Complete Section 5 (Package Evidence)
+12. Fill out `comprehensive_review_closeout.md` with all findings
+13. Fill out `results_intake_template.md` with evidence
+14. Submit `results_intake_template.md` for evaluation
 
 ---
 
 ## Notes
 
 - This is an audit workflow. Do not modify existing code unless absolutely necessary for evidence capture.
-- If a gate fails, document the failure clearly in closeout.md.
+- If a gate fails, document the failure clearly in comprehensive_review_closeout.md.
 - Mark any missing information as UNKNOWN rather than inferring values.
 - All evidence should be reproducible from the recorded git commit hash.
