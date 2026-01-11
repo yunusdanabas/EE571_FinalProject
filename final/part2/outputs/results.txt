@@ -1,0 +1,23 @@
+Part 2: Observer Simulation Results
+============================================================
+
+Measurement Matrix (Cd_new):
+[[1 0 0 0 0 0 0 0 0 0 0 0]
+ [0 0 0 0 0 1 0 0 0 0 0 0]]
+
+Initial Conditions:
+  x0 = [0. 0. 0. 1. 1. 1. 0. 0. 0. 0. 0. 0.]
+  xhat0 = [0. 0. 0. 0. 0. 1. 0. 0. 0. 0. 0. 0.]
+
+Observer Design:
+  Observer gain L shape: (12, 2)
+  Spectral radius: 0.800000
+
+RMS Estimation Errors (displacements x1-x6):
+  x1: 2.410293e-07
+  x2: 2.574988e-03
+  x3: 2.238235e+00
+  x4: 5.077334e+01
+  x5: 7.577671e-02
+  x6: 5.135673e-06
+  Overall RMS: 5.082271e+01

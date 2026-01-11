@@ -1,0 +1,21 @@
+Part 7: Sensor Augmentation Analysis - Results
+============================================================
+
+Case 1 (4 sensors: x1, x2, x5, x6):
+  Lk shape: (12, 4)
+  Estimator spectral radius: 0.998968
+  J: 4.017590e+02
+  RMS error (SS): 4.643125e-01
+  max|u|: 4.086037e-01
+
+Case 2 (6 sensors: x1-x6):
+  Lk shape: (12, 6)
+  Estimator spectral radius: 0.998415
+  J: 3.709941e+02
+  RMS error (SS): 2.702939e-01
+  max|u|: 4.086037e-01
+
+Comparison:
+  Part 6 J: 4.260967e+02
+  Case 1 J: 4.017590e+02
+  Case 2 J: 3.709941e+02

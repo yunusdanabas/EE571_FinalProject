@@ -1,0 +1,13 @@
+Part 6: LQG Controller (LQR + Kalman Filter) - Results
+============================================================
+
+LQG Controller:
+  K shape: (3, 12)
+  Lk shape: (12, 2)
+
+Cost Metrics:
+  Total cost J: 4.260967e+02
+  Max |u|: 4.086037e-01
+
+Estimation Metrics:
+  RMS estimation error: 9.573350e-01

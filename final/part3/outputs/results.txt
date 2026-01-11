@@ -1,0 +1,11 @@
+Part 3: LQR Controller Design with Observer - Results
+============================================================
+
+LQR Design:
+  K shape: (3, 12)
+  Closed-loop spectral radius: 0.999463
+Cost Metrics:
+  Total cost J: 9.057478e+07
+  Max |u|: 3.597390e+03
+Observer:
+  Spectral radius: 0.800000

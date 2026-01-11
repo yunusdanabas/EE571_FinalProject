@@ -1,0 +1,50 @@
+Part 1: Observability Analysis
+============================================================
+
+OBSERVABILITY RANK ANALYSIS
+------------------------------------------------------------
+System dimension (n): 12
+Rank of observability matrix: 6
+SVD tolerance used: 1.000000e-10
+Observable subspace dimension: 6
+Unobservable subspace dimension: 6
+System is observable: False
+
+KALMAN DECOMPOSITION RESULTS
+------------------------------------------------------------
+Condition number of T: 1.000010e+00
+Observable block Aoo shape: (6, 6)
+Unobservable block Auu shape: (6, 6)
+
+EIGENVALUES
+------------------------------------------------------------
+NOTE: All eigenvalues have magnitude ≈ 1.0 because the system is UNDAMPED.
+      They represent different frequencies (see ω values below).
+      The similarity in appearance is due to:
+      1. Undamped system → |z| = 1.0 (unit circle)
+      2. Small Ts = 0.01s → small angles ω*Ts
+      3. Limited precision display → look similar but are DIFFERENT frequencies
+
+Observable block (Aoo) eigenvalues:
+Total: 6 eigenvalues
+  Format: z = magnitude * exp(j*angle) → ω = angle/Ts (rad/s)
+  Note: All magnitudes ≈ 1.0 (undamped system on unit circle)
+
+  1. z = 0.999860-0.018475j  |z|=1.000031, ∠z=-0.018475 rad  → ω = -1.8475 rad/s (-0.2940 Hz)
+  2. z = 0.999962-0.014139j  |z|=1.000062, ∠z=-0.014139 rad  → ω = -1.4139 rad/s (-0.2250 Hz)
+  3. z = 1.000002-0.007653j  |z|=1.000031, ∠z=-0.007653 rad  → ω = -0.7653 rad/s (-0.1218 Hz)
+  4. z = 1.000002+0.007653j  |z|=1.000031, ∠z=0.007653 rad  → ω = 0.7653 rad/s (0.1218 Hz)
+  5. z = 0.999962+0.014139j  |z|=1.000062, ∠z=0.014139 rad  → ω = 1.4139 rad/s (0.2250 Hz)
+  6. z = 0.999860+0.018475j  |z|=1.000031, ∠z=0.018475 rad  → ω = 1.8475 rad/s (0.2940 Hz)
+
+Unobservable block (Auu) eigenvalues:
+Total: 6 eigenvalues
+  Format: z = magnitude * exp(j*angle) → ω = angle/Ts (rad/s)
+  Note: All magnitudes ≈ 1.0 (undamped system on unit circle)
+
+  1. z = 0.999794-0.018015j  |z|=0.999956, ∠z=-0.018017 rad  → ω = -1.8017 rad/s (-0.2868 Hz)
+  2. z = 0.999854-0.012467j  |z|=0.999932, ∠z=-0.012469 rad  → ω = -1.2469 rad/s (-0.1984 Hz)
+  3. z = 0.999977-0.004450j  |z|=0.999987, ∠z=-0.004451 rad  → ω = -0.4451 rad/s (-0.0708 Hz)
+  4. z = 0.999977+0.004450j  |z|=0.999987, ∠z=0.004451 rad  → ω = 0.4451 rad/s (0.0708 Hz)
+  5. z = 0.999854+0.012467j  |z|=0.999932, ∠z=0.012469 rad  → ω = 1.2469 rad/s (0.1984 Hz)
+  6. z = 0.999794+0.018015j  |z|=0.999956, ∠z=0.018017 rad  → ω = 1.8017 rad/s (0.2868 Hz)

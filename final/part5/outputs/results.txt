@@ -1,0 +1,32 @@
+Part 5: Kalman Filter Design - Results
+============================================================
+
+Kalman Filter Design:
+  Lk shape: (12, 2)
+  Estimator spectral radius: 0.999547
+
+RMS Metrics:
+  Overall RMS estimation error (full): 9.607036e-01
+  Overall RMS estimation error (steady-state): 5.312798e-01
+  RMS error e_x1 (full): 1.816744e-01
+  RMS error e_x1 (steady-state): 1.075163e-01
+  RMS error e_x6 (full): 2.044338e-01
+  RMS error e_x6 (steady-state): 5.154161e-02
+  RMS output tracking y1 (full): 1.816744e-01
+  RMS output tracking y1 (steady-state): 1.075163e-01
+  RMS output tracking y6 (full): 2.044338e-01
+  RMS output tracking y6 (steady-state): 5.154161e-02
+
+  Per-state RMS (full window):
+    x1: 1.816744e-01
+    x2: 2.668047e-01
+    x3: 2.767048e-01
+    x4: 3.211965e-01
+    x5: 3.254606e-01
+    x6: 2.044338e-01
+    x7: 2.637228e-01
+    x8: 2.885109e-01
+    x9: 3.002934e-01
+    x10: 2.645333e-01
+    x11: 3.086392e-01
+    x12: 2.882880e-01
