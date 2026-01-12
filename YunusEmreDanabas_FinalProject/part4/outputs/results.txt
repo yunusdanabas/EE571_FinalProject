@@ -1,0 +1,15 @@
+Part 4: LQR Controller Design with Reduced Input (u3 Removed) - Results
+============================================================
+
+LQR Design:
+  K_red shape: (2, 12)
+  Closed-loop spectral radius: 0.999518
+Cost Metrics:
+  Total cost J_red: 1.348077e+08
+  Max |u_red|: 4.951072e+03
+Comparison with Part 3:
+  Part 3 cost J: 9.057478e+07
+  Part 4 cost J_red: 1.348077e+08
+  Cost increase: 48.84%
+Observer:
+  Spectral radius: 0.800000

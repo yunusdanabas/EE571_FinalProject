@@ -1,0 +1,1044 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{margin=1in}
+
+\title{EE571 Final Project Report\\
+State Estimation and Optimal Control of a 6-Mass Spring System}
+\author{Yunus Emre Danabaş \\ 29359}
+\date{\today}
+
+
+
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    \Huge\textbf{EE571 Final Project Report\\
+    State Estimation and Optimal Control of a 6-Mass Spring System}\\
+    
+    \vspace{1.5cm}
+    
+    \Large Yunus Emre Danaba\c{s} \\
+    (yunusdanabas@sabanciuniv.edu - 29359) \\[0.5cm]
+    
+    
+    \vspace{1.5cm}
+    
+    \Large\today
+    
+    \vfill
+    
+    \includegraphics[width=0.5\textwidth]{sabancilogo.png} % Placeholder for Sabanci University logo
+    
+    \vspace*{1cm}
+\end{titlepage}
+
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+\label{sec:intro}
+
+\subsection{System description}
+This project studies a one-dimensional chain of six masses coupled by springs. The state vector is composed of six positions and six velocities:
+\begin{equation}
+x(t)=
+\begin{bmatrix}
+x_p(t)\\
+v(t)
+\end{bmatrix},
+\quad
+x_p(t)=
+\begin{bmatrix}
+x_1(t)\\x_2(t)\\x_3(t)\\x_4(t)\\x_5(t)\\x_6(t)
+\end{bmatrix},
+\quad
+v(t)=
+\begin{bmatrix}
+v_1(t)\\v_2(t)\\v_3(t)\\v_4(t)\\v_5(t)\\v_6(t)
+\end{bmatrix}.
+\end{equation}
+
+The system is actuated by three control inputs,
+\begin{equation}
+u(t) =
+\begin{bmatrix}
+u_1(t) & u_2(t) & u_3(t)
+\end{bmatrix}^\top \in \mathbb{R}^{3},
+\end{equation}
+and measured by an output vector whose dimension depends on the sensor configuration used in each part.
+
+The continuous-time state-space model is
+\begin{align}
+\dot{x}(t) &= A x(t) + B u(t), \label{eq:ct_ss}\\
+y(t) &= C x(t), \label{eq:ct_out}
+\end{align}
+where $A \in \mathbb{R}^{12 \times 12}$ encodes the coupled mass-spring dynamics, $B \in \mathbb{R}^{12 \times 3}$ maps the three actuators into the state derivatives, and $C$ selects the measured states.
+
+The model is discretized with a zero-order hold (ZOH) using sampling time $T_s = 0.01\,$s, yielding
+\begin{align}
+x[k+1] &= A_d x[k] + B_d u[k], \label{eq:dt_ss}\\
+y[k] &= C_d x[k]. \label{eq:dt_out}
+\end{align}
+Throughout the report, $k \in \mathbb{Z}_{\ge 0}$ denotes the discrete-time index.
+
+\subsection{Objectives}
+The overall goal is to design and evaluate state estimation and optimal control strategies for the discretized 6-mass spring system. The project progresses from basic model verification to optimal estimation and control under stochastic disturbances, and finally to performance analysis under sensor augmentation.
+
+A central regulation objective is expressed via the quadratic stage cost
+\begin{equation}
+\ell(x[k],u[k]) = u[k]^\top u[k] + y_1[k]^2 + y_6[k]^2,
+\end{equation}
+and the finite-horizon cost
+\begin{equation}
+J = \sum_{k=0}^{N-1} \left( u[k]^\top u[k] + y_1[k]^2 + y_6[k]^2 \right),
+\label{eq:cost_J}
+\end{equation}
+which balances control effort against regulation of the end-mass displacements.
+
+%\subsection{Project roadmap (Parts 0 to 7)}
+%The work is organized into eight parts that build on one another:
+%\begin{itemize}
+%  \item \textbf{Part 0: Baseline verification.} Discretize the continuous model with ZOH and verify open-loop behavior.
+%  \item \textbf{Part 1: Observability analysis.} Determine which states are observable for a given sensor choice.
+%  \item \textbf{Part 2: Observer design.} Design a Luenberger observer and validate state reconstruction in simulation.
+%  \item \textbf{Part 3: LQR controller.} Design a discrete-time LQR controller and implement output regulation using estimated states.
+%  \item \textbf{Part 4: Reduced-input LQR.} Redesign LQR with only two control inputs and quantify performance trade-offs.
+%  \item \textbf{Part 5: Kalman filter.} Design a steady-state Kalman filter for the noisy (stochastic) system.
+%  \item \textbf{Part 6: LQG controller.} Combine LQR and Kalman filtering into an LQG controller and evaluate closed-loop performance under noise.
+%  \item \textbf{Part 7: Sensor augmentation.} Redesign the estimator for additional sensors and quantify the impact on estimation and regulation.
+%\end{itemize}
+
+
+\section{Part 0: Baseline Verification}
+\label{sec:part0}
+
+\subsection{Objective}
+Part 0 validates the baseline (open-loop) behavior of the 6-mass spring system after discretization. This verification step ensures three key aspects:
+\begin{itemize}
+  \item The continuous-time state-space model is constructed correctly
+  \item The continuous-to-discrete conversion is implemented properly  
+  \item The undriven response matches the expected physics of an undamped coupled oscillator chain
+\end{itemize}
+This baseline response serves as a reference for evaluating the performance of observers and controllers in subsequent parts. 
+
+\subsection{System model}
+The continuous-time model is represented in state-space form as
+\begin{align}
+\dot{x}(t) &= A x(t) + B u(t), \label{eq:part0_ct}\\
+y(t) &= C x(t), \label{eq:part0_ct_y}
+\end{align}
+where $x(t) \in \mathbb{R}^{12}$ contains the six displacements and six velocities, and $u(t) \in \mathbb{R}^{3}$ contains the three control inputs. The matrix dimensions are
+\[
+A \in \mathbb{R}^{12\times 12}, \quad B \in \mathbb{R}^{12\times 3}, \quad C \in \mathbb{R}^{1\times 12}.
+\]
+In this baseline configuration, the output is a single measurement corresponding to the displacement of mass 1, so $y(t) = y_1(t) = x_1(t)$.
+
+For digital simulation and later discrete-time design, the model is discretized with sampling time $T_s = 0.01\,\mathrm{s}$ to obtain
+\begin{align}
+x[k+1] &= A_d x[k] + B_d u[k], \label{eq:part0_dt}\\
+y[k] &= C_d x[k], \label{eq:part0_dt_y}
+\end{align}
+with $A_d \in \mathbb{R}^{12\times 12}$, $B_d \in \mathbb{R}^{12\times 3}$, and $C_d \in \mathbb{R}^{1\times 12}$.
+
+\subsection{Methodology: ZOH discretization}
+A zero-order hold (ZOH) assumption is used, meaning the input is held constant over each sampling interval $[kT_s,(k+1)T_s)$. The corresponding discrete-time matrices are
+\begin{align}
+A_d &= e^{A T_s}, \label{eq:part0_Ad}\\
+B_d &= \int_{0}^{T_s} e^{A\tau}\,B\,d\tau, \label{eq:part0_Bd}\\
+C_d &= C, \qquad D_d = 0. \label{eq:part0_Cd}
+\end{align}
+The baseline simulation uses open-loop input $u[k] \equiv 0$ for $N=1000$ steps, corresponding to a total simulated duration of $N T_s = 10\,\mathrm{s}$. 
+
+\subsection{Initial conditions}
+To excite the chain dynamics, the initial condition is chosen as a unit displacement on mass 6 with all other states at rest:
+
+\begin{equation}
+\label{eq:part0_x0}
+x[0] =
+\left[
+\begin{array}{@{}*{12}{c}@{}}
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0
+\end{array}
+\right]^{\top}
+\end{equation}
+
+
+
+This corresponds to stretching the last spring segment and then releasing the system with zero initial velocities.
+
+\subsection{Results}
+Figures \ref{fig:part0_output} and \ref{fig:part0_displacements} show the baseline time responses. The output $y[k]=x_1[k]$ remains oscillatory, and the displacements $x_1,\dots,x_6$ illustrate how the initial deformation at mass 6 propagates through the coupled spring chain.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part0_output_plot.png}
+    \caption{Baseline system output $y = Cx$ showing displacement of mass 1.}
+    \label{fig:part0_output}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part0_displacements_plot.png}
+    \caption{Open-loop displacements of all masses, $x_1$ through $x_6$, under the initial condition in \eqref{eq:part0_x0}.}
+    \label{fig:part0_displacements}
+\end{figure}
+
+\subsection{Findings}
+\begin{itemize}
+  \item \textbf{Oscillatory behavior (undamped chain).} The responses are oscillatory because the model contains no dissipative elements. Energy alternates between potential energy in the springs and kinetic energy in the masses. Individual coordinates can show amplitude modulation because energy redistributes among coupled modes, even though the total energy is conserved.
+  \item \textbf{Marginal stability.} The open-loop response does not converge to zero, which is consistent with an undamped mechanical system. In discrete time, this corresponds to eigenvalues of $A_d$ lying on (or very near) the unit circle.
+  \item \textbf{Energy propagation through the chain.} Starting from a displacement applied at mass 6, motion propagates through the spring couplings, exciting the upstream masses with phase shifts and different amplitudes, as seen in Fig.~\ref{fig:part0_displacements}. This baseline propagation pattern is a key reference when evaluating the effect of estimation and control in later parts.
+\end{itemize}
+
+\newpage
+
+\section{Part 1: Observability Analysis}
+\label{sec:part1}
+
+\subsection{Objective}
+Part 1 evaluates the \textit{observability} of the discretized 6-mass spring system using only a single sensor that measures the displacement of mass 1 ($y[k] = x_1[k]$).
+
+Observability determines whether the internal state $x[k]$ can be uniquely reconstructed from the measured output history $y[0], y[1], \ldots$ under known inputs $u[k]$. If some states are unobservable, then no observer---whether Luenberger or Kalman filter---can estimate them from the available measurements. This limitation directly affects achievable feedback performance when using estimated states.
+ 
+
+\subsection{Theory}
+Consider the discrete-time LTI model
+\begin{align}
+x[k+1] &= A_d x[k] + B_d u[k], \\
+y[k] &= C_d x[k],
+\end{align}
+with state dimension $n=12$ and a single output ($p=1$). The (discrete-time) observability matrix is
+\begin{equation}
+\mathcal{O} \;=\;
+\begin{bmatrix}
+C_d \\
+C_d A_d \\
+C_d A_d^2 \\
+\vdots \\
+C_d A_d^{n-1}
+\end{bmatrix}
+\in \mathbb{R}^{np \times n}.
+\label{eq:part1_obs_matrix}
+\end{equation}
+The system is \textit{fully observable} if and only if
+\begin{equation}
+\mathrm{rank}(\mathcal{O}) = n.
+\label{eq:part1_full_obs_cond}
+\end{equation}
+
+When $\mathrm{rank}(\mathcal{O}) = r < n$, the state space can be decomposed into observable and unobservable subspaces. The \textit{Kalman decomposition} provides a similarity transform $T$ such that, in transformed coordinates $\bar{x}[k] = T^{-1}x[k]$, the system matrices take a structured form:
+\begin{equation}
+\bar{A} = T^{-1}A_d T =
+\begin{bmatrix}
+A_{oo} & A_{ou} \\
+0      & A_{uu}
+\end{bmatrix},
+\qquad
+\bar{C} = C_d T = \begin{bmatrix} C_o & 0 \end{bmatrix},
+\label{eq:part1_kalman_form}
+\end{equation}
+where the first $r$ transformed states are observable and the remaining $n-r$ states are unobservable (they do not affect the output). 
+
+\subsection{Methodology}
+The following procedure is applied to the discretized model with $T_s = 0.01\,\mathrm{s}$ and a single displacement sensor $y[k] = x_1[k]$:
+
+\begin{itemize}
+  \item \textbf{SVD-based rank computation.} Construct $\mathcal{O}$ as in \eqref{eq:part1_obs_matrix} and compute its numerical rank using singular value decomposition (SVD). A tolerance-based threshold is used to distinguish nonzero singular values from numerical noise.
+  \item \textbf{Kalman decomposition.} Compute a well-conditioned similarity transform $T$ that separates observable and unobservable subspaces, then extract the observable block $A_{oo}$ and unobservable block $A_{uu}$ in \eqref{eq:part1_kalman_form}. The condition number $\kappa(T)$ is recorded to assess numerical reliability.
+\end{itemize}
+
+
+\subsection{Results}
+The rank test shows the system is not fully observable with a single sensor measuring $x_1$. The Kalman decomposition confirms a clean separation into a 6-dimensional observable subspace and a 6-dimensional unobservable subspace.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        Metric & Value \\
+        \midrule
+        System dimension (n) & 12 \\
+        Observability rank & 6 \\
+        Observable states & 6 \\
+        Unobservable states & 6 \\
+        Transformation condition number & 1.000010 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Observability analysis results.}
+    \label{tab:part1_results}
+\end{table}
+
+
+\subsection{Eigenvalue analysis (modal interpretation)}
+Because the mechanical chain is modeled as undamped, the continuous-time eigenvalues are (ideally) purely imaginary, $s = \pm j\omega$. Under ZOH discretization,
+\begin{equation}
+z = e^{sT_s} = e^{\pm j\omega T_s} = \cos(\omega T_s) \pm j\sin(\omega T_s),
+\label{eq:part1_z_mapping}
+\end{equation}
+which implies $|z| = 1$ for each undamped mode (up to small numerical deviations). Therefore, it is expected that eigenvalues of both $A_{oo}$ and $A_{uu}$ lie on or very near the unit circle.
+
+Using the Kalman decomposition blocks, the distinct modal frequencies (in $\mathrm{rad/s}$) are:
+
+\begin{itemize}
+  \item \textbf{Observable mode frequencies:} $0.7653,\; 1.4139,\; 1.8475$.
+  \item \textbf{Unobservable mode frequencies:} $0.4451,\; 1.2469,\; 1.8017$.
+\end{itemize}
+
+These frequencies correspond to different vibration modes. The fact that all eigenvalue magnitudes are near 1.0 reflects marginal stability of an undamped discrete-time oscillator, not a numerical error. 
+
+\subsection{Findings}
+\begin{itemize}
+  \item \textbf{Not fully observable with a single sensor.} With only $y[k]=x_1[k]$, the observability rank is 6, so half of the 12-dimensional state is unobservable.
+  \item \textbf{Mode-dependent observability.} Only modes that produce motion at mass 1 appear in the output and are therefore observable. Modes in which mass 1 does not participate (physically interpretable as antisymmetric patterns relative to the sensing location) are unobservable from $x_1$ alone.
+  \item \textbf{Motivation for sensor augmentation.} Since unobservable states cannot be reconstructed by any observer, an additional sensor is required to capture the missing modes. This motivates adding a second displacement measurement in Part 2 to achieve full state observability.
+\end{itemize}
+
+
+\section{Part 2: Observer Design}
+\label{sec:part2}
+
+\subsection{Objective}
+In Part 1, using only $y[k]=x_1[k]$ left a nontrivial unobservable subspace, which prevents full-state estimation. The objective of Part 2 is to design a discrete-time \textit{Luenberger observer} using an augmented sensing configuration (measuring $x_1$ and $x_6$) so that all 12 states can be estimated from measured outputs and the known input. 
+
+\subsection{Sensor configuration}
+Two displacement sensors are used:
+\[
+y[k] =
+\begin{bmatrix}
+y_1[k] \\ y_6[k]
+\end{bmatrix}
+=
+\begin{bmatrix}
+x_1[k] \\ x_6[k]
+\end{bmatrix},
+\qquad
+C =
+\left[
+\begin{array}{@{}*{12}{c}@{}}
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0
+\end{array}
+\right]
+\in \mathbb{R}^{2\times 12}.
+\]
+
+This configuration provides information from both ends of the chain, which is sufficient in practice to reconstruct the internal state evolution via the model dynamics. 
+
+\subsection{Observer design}
+The discrete-time plant model is
+\begin{align}
+x[k+1] &= A_d x[k] + B_d u[k], \\
+y[k] &= C x[k],
+\end{align}
+where $x[k]\in\mathbb{R}^{12}$, $u[k]\in\mathbb{R}^{3}$, and $y[k]\in\mathbb{R}^{2}$.
+
+A Luenberger observer is chosen as
+\begin{align}
+\hat{x}[k+1] &= A_d \hat{x}[k] + B_d u[k] + L\bigl(y[k]-\hat{y}[k]\bigr), \label{eq:part2_observer}\\
+\hat{y}[k] &= C\hat{x}[k], \label{eq:part2_yhat}
+\end{align}
+where $L\in\mathbb{R}^{12\times 2}$ is the observer gain. Defining the estimation error $e[k]=x[k]-\hat{x}[k]$, the error dynamics become
+\begin{equation}
+e[k+1] = (A_d - LC)\,e[k]. \label{eq:part2_error_dyn}
+\end{equation}
+Therefore, the observer is asymptotically stable if all eigenvalues of $(A_d-LC)$ lie strictly inside the unit circle.
+
+\paragraph{Pole placement via the dual system.}
+Observer pole placement for $(A_d,C)$ is dual to state-feedback pole placement for $(A_d^\top, C^\top)$. A set of $n=12$ distinct real poles is selected evenly in the range $[0.4,\,0.8]$, then placed for the dual system using a numerical pole placement routine. The resulting dual gain is transposed to obtain $L$. The achieved stability is summarized by the spectral radius
+\begin{equation}
+\rho(A_d-LC) = \max_i | \lambda_i(A_d-LC) |,
+\end{equation}
+which is required to satisfy $\rho(A_d-LC)<1$ for convergence. 
+
+\subsection{Initial conditions and simulation setup}
+The plant and observer are initialized with mismatched initial conditions to test convergence:
+\begin{align}
+x[0] &=
+\left[
+\begin{array}{@{}*{12}{c}@{}}
+0 & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 & 0 & 0 & 0
+\end{array}
+\right]^{\top},
+\label{eq:part2_x0}\\
+\hat{x}[0] &=
+\left[
+\begin{array}{@{}*{12}{c}@{}}
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0
+\end{array}
+\right]^{\top}.
+\label{eq:part2_xhat0}
+\end{align}
+
+The simulation uses $T_s=0.01\,\mathrm{s}$ and $N=1000$ steps (10 seconds) with open-loop input $u[k]\equiv 0$. 
+
+\subsection{Results}
+The designed observer gain has shape $L\in\mathbb{R}^{12\times 2}$, and the observer error dynamics are stable with spectral radius $0.8$. RMS estimation errors are reported for the displacement states $x_1$ through $x_6$ over the full simulation window.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        Metric & Value \\
+        \midrule
+        Observer gain shape & $(12,\,2)$ \\
+        Spectral radius $\rho(A_d-LC)$ & $0.800000$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Observer design summary.}
+    \label{tab:part2_design_summary}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        State & RMS error & Note \\
+        \midrule
+        $x_1$ (measured) & $2.4 \times 10^{-7}$ & Near numerical precision \\
+        $x_6$ (measured) & $5.1 \times 10^{-6}$ & Near numerical precision \\
+        $x_2$ & $2.6 \times 10^{-3}$ & Small \\
+        $x_5$ & $7.6 \times 10^{-2}$ & Moderate \\
+        $x_3$ & $2.2$ & Larger (interior) \\
+        $x_4$ & $50.8$ & Largest (interior) \\
+        \bottomrule
+    \end{tabular}
+    \caption{RMS estimation errors for displacement states, grouped by magnitude.}
+    \label{tab:part2_rms_disp}
+\end{table}
+
+
+Figures \ref{fig:part2_outputs}--\ref{fig:part2_errors_zoom} visualize tracking of measured outputs and the displacement estimation errors.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part2_outputs_comparison.png}
+    \caption{Measured outputs ($x_1$, $x_6$) and corresponding observer estimates. The estimated outputs closely match the measured signals.}
+    \label{fig:part2_outputs}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part2_estimation_errors.png}
+    \caption{Estimation errors $e_i[k]=x_i[k]-\hat{x}_i[k]$ for displacement states ($x_1$ to $x_6$) over 10 seconds.}
+    \label{fig:part2_errors}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part2_estimation_errors_05sec.png}
+    \caption{Zoomed view of the first 0.5 seconds of displacement estimation errors, highlighting the initial transient due to $x[0]\neq \hat{x}[0]$.}
+    \label{fig:part2_errors_zoom}
+\end{figure}
+
+
+\subsection{Numerical notes}
+The pole placement routine may emit a convergence warning due to numerical difficulty in 12-dimensional placement; however, stability is confirmed by verifying $\rho(A_d-LC)=0.8<1$. A separate Qt platform warning in some Linux environments does not affect results. 
+
+\subsection{Findings}
+\begin{itemize}
+  \item \textbf{Observer stability.} The designed observer is stable with $\rho(A_d-LC)=0.8$, so estimation errors contract over time.
+  \item \textbf{Measured states are estimated with very small error.} Since $x_1$ and $x_6$ are directly measured, their RMS errors are near numerical precision (on the order of $10^{-7}$ to $10^{-6}$). 
+  \item \textbf{Unmeasured states show larger transient and RMS error.} Intermediate displacements, especially $x_3$ and $x_4$, exhibit larger errors due to the initial mismatch and the need to infer internal motion from boundary measurements. The errors remain bounded and decay after the initial transient, consistent with stable error dynamics. 
+  \item \textbf{Full-state estimation enabled by two sensors.} With the augmented measurements $(x_1,x_6)$, the observer successfully reconstructs the full 12-state trajectory well enough to support estimated-state feedback in later parts. 
+\end{itemize}
+
+
+
+
+
+\section{Part 3: LQR Controller Design}
+\label{sec:part3}
+
+\subsection{Objective}
+The objective of Part 3 is to design a discrete-time Linear Quadratic Regulator (LQR) for the discretized 6-mass spring system and apply it using the estimated state $\hat{x}[k]$ obtained from the Part 2 Luenberger observer. The controller is designed to regulate the boundary displacements $x_1$ and $x_6$ toward zero while limiting control effort. 
+
+\subsection{LQR design}
+The cost function from \eqref{eq:cost_J} is written in standard LQR form with weights
+\begin{equation}
+Q = C_y^\top C_y, \qquad R = I_3,
+\label{eq:part3_QR}
+\end{equation}
+penalizing only $x_1$ and $x_6$ in the state cost. The discrete-time algebraic Riccati equation (DARE) yields the optimal gain
+\begin{equation}
+K = \left(R + B_d^\top P B_d\right)^{-1}B_d^\top P A_d \in \mathbb{R}^{3 \times 12},
+\label{eq:part3_K}
+\end{equation}
+where $P$ is the stabilizing solution. The closed-loop matrix $A_{\mathrm{cl}} = A_d - B_d K$ must satisfy $\rho(A_{\mathrm{cl}}) < 1$ for stability.
+
+Since the full state is not measured, the control law uses the observer estimate:
+\begin{equation}
+u[k] = -K\hat{x}[k].
+\label{eq:part3_u}
+\end{equation}
+By the separation principle, $K$ and $L$ can be designed independently; the closed loop is stable when both $(A_d - B_dK)$ and $(A_d - LC_y)$ are stable. 
+
+\subsection{Closed-loop dynamics}
+The combined plant, observer, and control law used in simulation are
+\begin{align}
+x[k+1] &= A_d x[k] + B_d u[k], \\
+\hat{x}[k+1] &= A_d \hat{x}[k] + B_d u[k] + L\bigl(y[k] - C_y\hat{x}[k]\bigr), \\
+u[k] &= -K \hat{x}[k],
+\end{align}
+with $y[k] = C_y x[k]$ and $\hat{y}[k] = C_y\hat{x}[k]$. 
+
+\subsection{Results}
+Table \ref{tab:part3_results} summarizes the key numerical results for the designed controller and the resulting closed-loop simulation.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        Metric & Value \\
+        \midrule
+        LQR gain $K$ shape & $(3,\,12)$ \\
+        Closed-loop spectral radius $\rho(A_d - B_dK)$ & $0.999463$ \\
+        Total cost $J$ & $9.057478\times 10^{7}$ \\
+        Maximum input magnitude $\max_{i,k}|u_i[k]|$ & $3.597390\times 10^{3}$ \\
+        Observer spectral radius $\rho(A_d - LC_y)$ & $0.800000$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Part 3 LQR with observer. Summary of controller and closed-loop performance metrics.}
+    \label{tab:part3_results}
+\end{table}
+
+\paragraph{Output regulation.}
+Figure \ref{fig:part3_outputs} shows the regulated outputs $y_1=x_1$ and $y_6=x_6$ under the observer-based LQR control law in \eqref{eq:part3_u}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{figures/part3_outputs_y1_y6.png}
+    \caption{Closed-loop outputs under observer-based LQR. Top: $y_1=x_1$. Bottom: $y_6=x_6$.}
+    \label{fig:part3_outputs}
+\end{figure}
+
+
+\paragraph{Control inputs.}
+Figure \ref{fig:part3_inputs} shows the three control inputs. The inputs exhibit a large initial transient and then decay toward zero as the outputs are regulated.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/part3_inputs_u1_u2_u3.png}
+    \caption{Closed-loop control inputs $u_1$, $u_2$, $u_3$ generated by $u[k] = -K\hat{x}[k]$.}
+    \label{fig:part3_inputs}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/part3_inputs_u1_u2_u3_05sec.png}
+    \caption{Zoomed view (first 0.5 s) of the closed-loop control inputs $u_1$, $u_2$, $u_3$, highlighting the initial transient.}
+    \label{fig:part3_inputs_zoom}
+\end{figure}
+
+
+\paragraph{Estimation error norm.}
+To confirm that estimated-state feedback is well-justified, Fig.~\ref{fig:part3_enorm} plots the norm of the estimation error $\|x[k]-\hat{x}[k]\|$. Convergence of this error indicates that the observer transient decays and the controller effectively approaches true-state feedback behavior.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part3_estimation_error_norm.png}
+    \caption{Estimation error norm $\|x-\hat{x}\|$ over time under observer-based LQR.}
+    \label{fig:part3_enorm}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part3_estimation_error_norm_05sec.png}
+    \caption{Zoomed view (first 0.5 s) of the estimation error norm $\|x-\hat{x}\|$, highlighting the observer transient.}
+    \label{fig:part3_enorm_zoom}
+\end{figure}
+
+\subsection{Findings}
+\begin{itemize}
+    \item \textbf{Closed-loop stability.} The LQR design yields $\rho(A_d-B_dK)=0.999463<1$, so the nominal closed-loop system is stable. The value is so close to 1.0, indicating slow convergence in the dominant closed-loop modes. 
+    \item \textbf{Output regulation.} Both $y_1=x_1$ and $y_6=x_6$ are driven toward zero, demonstrating that the chosen $Q=C_y^\top C_y$ correctly emphasizes boundary displacement regulation. 
+    \item \textbf{Estimated-state feedback works.} The observer remains stable with spectral radius $0.8$, and the estimation error norm decays after the initial mismatch. This validates the separation principle in implementation, since the controller uses $u[k] = -K\hat{x}[k]$ rather than $-Kx[k]$. 
+    \item \textbf{Control effort.} The maximum input magnitude is $3.597\times 10^{3}$, and the total cost is $J=9.057\times 10^{7}$ for the simulated horizon. These values reflect the trade-off between aggressive initial regulation and input energy penalization under $R=I_3$. 
+\end{itemize}
+
+\newpage
+
+\section{Part 4: Reduced Input LQR Controller}
+\label{sec:part4}
+
+\subsection{Objective}
+Part 4 evaluates the effect of reduced actuator authority by redesigning the LQR controller using only two inputs $(u_1,u_2)$ instead of three $(u_1,u_2,u_3)$. The goal is to quantify how removing one actuator impacts closed-loop stability, regulation performance of $(x_1,x_6)$, and required control effort.
+
+\subsection{Input matrix reduction}
+The discrete-time plant from Part 3 is
+\begin{equation}
+x[k+1] = A_d x[k] + B_d u[k], \qquad y[k] = C_y x[k],
+\end{equation}
+where $x\in\mathbb{R}^{12}$ and $u\in\mathbb{R}^{3}$. In this part, the third input $u_3$ is removed by selecting only the first two columns of $B_d$:
+\begin{equation}
+B_{d,\mathrm{red}} = B_d(:,[1,2]) \in \mathbb{R}^{12\times 2}, 
+\qquad
+u_{\mathrm{red}}[k] = \begin{bmatrix}u_1[k]\\u_2[k]\end{bmatrix}\in\mathbb{R}^{2}.
+\label{eq:part4_Bred}
+\end{equation}
+The reduced-input plant becomes
+\begin{equation}
+x[k+1] = A_d x[k] + B_{d,\mathrm{red}}\,u_{\mathrm{red}}[k].
+\label{eq:part4_plant}
+\end{equation}
+
+\subsection{LQR redesign}
+The DARE and gain computation follow Section~\ref{sec:part3} with $B_{d,\mathrm{red}}$ replacing $B_d$ and $R_{\mathrm{red}} = I_2$. The state weight $Q = C_y^\top C_y$ is unchanged. The resulting gain is $K_{\mathrm{red}} \in \mathbb{R}^{2 \times 12}$, and the closed-loop matrix is $A_{\mathrm{cl,red}} = A_d - B_{d,\mathrm{red}} K_{\mathrm{red}}$. Note that $K_{\mathrm{red}}$ must be recomputed via DARE; it cannot be obtained by simply deleting the third row of the Part 3 gain.
+
+\subsection{Implementation}
+As in Part 3, the control law uses the observer estimate: $u_{\mathrm{red}}[k] = -K_{\mathrm{red}}\hat{x}[k]$. Both plant and observer use $B_{d,\mathrm{red}}$ for consistency.
+
+\subsection{Results}
+The reduced-input controller remains stable but exhibits degraded performance relative to the 3-input design. Table \ref{tab:part4_comparison} compares the main metrics of Part 3 and Part 4.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        Metric & Part 3 (3 inputs) & Part 4 (2 inputs) \\
+        \midrule
+        LQR gain shape & (3, 12) & (2, 12) \\
+        Spectral radius & 0.999463 & 0.999518 \\
+        Total cost $J$ & $9.057 \times 10^7$ & $1.348 \times 10^8$ \\
+        Max $|u|$ & $3.597 \times 10^3$ & $4.951 \times 10^3$ \\
+        Cost increase & -- & 48.84\% \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparison of full-input vs reduced-input LQR (observer-based implementation in both cases).}
+    \label{tab:part4_comparison}
+\end{table}
+
+\paragraph{Outputs.}
+Figure \ref{fig:part4_outputs} shows $y_1=x_1$ and $y_6=x_6$ under reduced-input control.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{figures/part4_outputs_y1_y6.png}
+    \caption{Closed-loop outputs under reduced-input observer-based LQR. Top: $y_1=x_1$. Bottom: $y_6=x_6$.}
+    \label{fig:part4_outputs}
+\end{figure}
+
+\paragraph{Control inputs.}
+Figure \ref{fig:part4_inputs} shows the two applied inputs over the full simulation horizon. Figure \ref{fig:part4_inputs_zoom} provides a zoomed view of the first 0.5 s to highlight the initial transient.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{figures/part4_inputs_u1_u2.png}
+    \caption{Reduced-input control signals $u_1$ and $u_2$ generated by $u_{\mathrm{red}}[k] = -K_{\mathrm{red}}\hat{x}[k]$.}
+    \label{fig:part4_inputs}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/part4_inputs_u1_u2_05sec.png}
+    \caption{Zoomed view (first 0.5 s) of $u_1$ and $u_2$, highlighting the initial transient required to compensate for the removed actuator.}
+    \label{fig:part4_inputs_zoom}
+\end{figure}
+
+\paragraph{Estimation error norm.}
+Figure \ref{fig:part4_enorm} plots $\|x[k]-\hat{x}[k]\|$ over the full horizon. Figure \ref{fig:part4_enorm_zoom} shows the first 0.5 s.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part4_estimation_error_norm.png}
+    \caption{Estimation error norm $\|x-\hat{x}\|$ under reduced-input observer-based LQR.}
+    \label{fig:part4_enorm}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/part4_estimation_error_norm_05sec.png}
+    \caption{Zoomed view (first 0.5 s) of the estimation error norm $\|x-\hat{x}\|$.}
+    \label{fig:part4_enorm_zoom}
+\end{figure}
+
+\subsection{Findings}
+\begin{itemize}
+    \item \textbf{Stability is preserved.} The reduced-input closed-loop spectral radius is $\rho(A_{\mathrm{cl,red}})=0.999518<1$, so the system remains stable, with a dominant mode very close to the unit circle and therefore slow convergence.
+    \item \textbf{Performance degrades with fewer actuators.} Removing $u_3$ increases the total cost by 48.84\% (from $9.057\times 10^7$ to $1.348\times 10^8$), quantifying the loss of control authority.
+    \item \textbf{Remaining actuators work harder.} The maximum input magnitude increases from $3.597\times 10^3$ to $4.951\times 10^3$, indicating higher effort in $u_1$ and $u_2$ to achieve comparable regulation.
+    \item \textbf{Observer-based control remains valid.} The observer dynamics are unchanged in structure, and the estimation error norm decays after the initial transient, supporting the separation principle in the reduced-input setting.
+\end{itemize}
+
+\newpage
+
+\section{Part 5: Kalman Filter Design}
+
+\subsection{Objective}
+Parts 0--4 used deterministic models with a Luenberger observer designed via pole placement. In Part 5, the model is extended to a \emph{stochastic} setting by introducing process noise (actuator disturbances) and measurement noise (sensor noise). The objective is to design a \emph{steady-state discrete-time Kalman filter} that optimally estimates all 12 states from two noisy displacement measurements (mass 1 and mass 6).
+
+The key difference from Part 2 is the design approach: the Luenberger observer uses pole placement to enforce a chosen convergence rate, while the Kalman filter uses known noise statistics to compute a gain that minimizes the steady-state estimation error covariance. Under standard linear Gaussian assumptions, the Kalman filter yields the minimum-variance linear estimate, making it the best linear unbiased estimator (BLUE).
+
+
+\subsection{Noise Model}
+The discrete-time plant (obtained via ZOH with $T_s = 0.01\,\mathrm{s}$) is modeled with additive actuator noise:
+\begin{align}
+x[k+1] &= A_d x[k] + B_d u[k] + B_d w[k], \label{eq:part5_stoch_dynamics}\\
+y_{\text{meas}}[k] &= C x[k] + v[k], \label{eq:part5_meas_model}
+\end{align}
+where $w[k]$ and $v[k]$ are zero-mean white noise sequences with covariances
+\begin{align}
+\mathbb{E}\{w[k]w[k]^\top\} &= Q_w, \qquad Q_w = 0.05\, I_3, \\
+\mathbb{E}\{v[k]v[k]^\top\} &= R_v, \qquad R_v = 0.1\, I_2.
+\end{align}
+Because the process noise enters through the input channels, the equivalent state-space process noise covariance is
+\begin{equation}
+Q_x = B_d Q_w B_d^\top \in \mathbb{R}^{12\times 12}.
+\label{eq:part5_Qx}
+\end{equation}
+
+\subsection{Sensor Configuration}
+Two displacement sensors are used, measuring $x_1$ and $x_6$. The measurement matrix is
+\begin{equation}
+C =
+\left[
+\begin{array}{@{}*{12}{c}@{}}
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0
+\end{array}
+\right]
+\in \mathbb{R}^{2\times 12}.
+\end{equation}
+
+
+\subsection{Kalman Filter Design}
+The discrete-time Kalman filter is the minimum-variance linear estimator for linear systems with (approximately) Gaussian noise. In steady-state form, the estimator uses a constant gain $L_k$ and updates as
+\begin{align}
+\hat{y}[k] &= C\hat{x}[k], \\
+\hat{x}[k+1] &= A_d \hat{x}[k] + B_d u[k] + L_k \big(y_{\text{meas}}[k] - \hat{y}[k]\big).
+\label{eq:part5_kf_update}
+\end{align}
+The term $y_{\text{meas}}[k] - \hat{y}[k]$ is the \emph{innovation} (measurement residual) used to correct the model prediction.
+
+The steady-state error covariance $P$ is obtained by solving the estimator DARE (the dual Riccati equation):
+\begin{equation}
+P = A_d P A_d^\top + Q_x \;-\; A_d P C^\top \big(C P C^\top + R_v\big)^{-1} C P A_d^\top,
+\label{eq:part5_dare_explicit}
+\end{equation}
+which in implementation is computed via
+\begin{equation}
+P = \texttt{solve\_dare}\!\left(A_d^\top,\, C^\top,\, Q_x,\, R_v\right).
+\end{equation}
+The corresponding steady-state Kalman gain is
+\begin{equation}
+L_k = P C^\top \left(C P C^\top + R_v\right)^{-1}
+\in \mathbb{R}^{12\times 2}.
+\label{eq:part5_kf_gain}
+\end{equation}
+
+The associated estimation error dynamics are
+\begin{equation}
+e[k+1] = (A_d - L_k C)\,e[k] + B_d w[k] - L_k v[k],
+\label{eq:part5_error_dynamics}
+\end{equation}
+and discrete-time estimator stability requires $\rho(A_d - L_k C) < 1$, where $\rho(\cdot)$ is the spectral radius.
+
+\subsection{Results}
+The filter was evaluated over $N=1000$ steps (10 seconds) with the noise covariances in \eqref{eq:part5_stoch_dynamics}--\eqref{eq:part5_Qx}. The initial conditions match Part 2 (Section~\ref{sec:part2}): $x[0] = [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0]^\top$ (actual) and $\hat{x}[0] = [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]^\top$ (estimator), testing convergence under noise. To isolate estimator behavior, the simulation used zero control input ($u[k]=0$), so the state evolution is driven only by process noise and the estimator correction.
+
+Key numerical results are:
+\begin{itemize}
+  \item Kalman gain shape: $L_k \in \mathbb{R}^{12 \times 2}$
+  \item Estimator spectral radius: $\rho(A_d - L_k C) = 0.999547$
+  \item RMS estimation error (full window): $0.9607$
+  \item RMS estimation error (steady-state portion): $0.5313$
+\end{itemize}
+
+The steady-state RMS error is reduced by
+\begin{equation}
+\frac{0.9607 - 0.5313}{0.9607} \approx 0.447,
+\end{equation}
+which is approximately a $45\%$ improvement after the initial transient.
+
+\begin{figure}[H]
+    \centering
+    % source: final/part5/outputs/outputs_y_vs_yhat.png
+    \includegraphics[width=0.9\textwidth]{figures/part5_outputs_y_vs_yhat.png}
+    \caption{Noisy measurements and Kalman filter estimates for the measured outputs ($x_1$ and $x_6$). The estimate $\hat{y}$ tracks the true output while attenuating measurement noise in $y_{\mathrm{meas}}$.}
+    \label{fig:part5_outputs_y_vs_yhat}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % source: final/part5/outputs/estimation_error_norm.png
+    \includegraphics[width=0.9\textwidth]{figures/part5_estimation_error_norm.png}
+    \caption{Estimation error norm $\lVert x - \hat{x}\rVert$ under process and measurement noise. The error decreases from its initial transient and then fluctuates around a lower steady-state level.}
+    \label{fig:part5_estimation_error_norm}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % source: final/part5/outputs/estimation_error_x1_x6.png
+    \includegraphics[width=0.9\textwidth]{figures/part5_estimation_error_x1_x6.png}
+    \caption{Estimation errors for the measured displacement states. Both $e_{x_1}$ and $e_{x_6}$ remain bounded and improve after the transient, consistent with steady-state filtering behavior.}
+    \label{fig:part5_estimation_error_x1_x6}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % source: final/part5/outputs/per_state_rms_bar.png
+    \includegraphics[width=0.9\textwidth]{figures/part5_per_state_rms_bar.png}
+    \caption{Per-state RMS estimation error across all 12 states. The directly measured states ($x_1$ and $x_6$) exhibit lower RMS error than several unmeasured states, while all states remain estimable with bounded error.}
+    \label{fig:part5_per_state_rms_bar}
+\end{figure}
+
+\subsection{Comparison with Part 2 Observer}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        Feature & Part 2 Observer & Part 5 Kalman Filter \\
+        \midrule
+        Design method & Pole placement & DARE (optimal) \\
+        Noise handling & None & Process + measurement \\
+        Optimality & Suboptimal & Optimal (minimum error covariance) \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparison of deterministic observer and stochastic Kalman filter.}
+    \label{tab:part5_comparison}
+\end{table}
+
+\subsection{Findings}
+\begin{itemize}
+  \item The Kalman filter explicitly incorporates both process noise and sensor noise through $(Q_w, R_v)$, producing an estimator tuned for uncertainty rather than deterministic convergence.
+  \item The steady-state RMS error is approximately $45\%$ lower than the full-window RMS error, showing that the filter converges from an initial transient to a lower steady-state error level.
+  \item The estimator spectral radius $\rho(A_d - L_k C) = 0.999547$ is strictly below unity (stable) but close to one, which is consistent with an optimal trade-off between responsiveness (tracking) and noise rejection for a lightly damped system.
+  \item Using only two noisy displacement measurements ($x_1$ and $x_6$), the filter produces bounded estimates of all 12 states, enabling LQG synthesis in Part 6 by combining this estimator with the LQR controller.
+\end{itemize}
+
+
+\section{Part 6: LQG Controller}
+
+\subsection{Objective}
+In this part, we combine the optimal state-feedback controller from Part 3 (discrete-time LQR) with the optimal state estimator from Part 5 (steady-state Kalman filter) to obtain an LQG (Linear Quadratic Gaussian) controller for the noisy 6-mass spring system. The resulting controller computes the control input using the estimated state $\hat{x}[k]$ reconstructed from noisy measurements, enabling near-optimal regulation when the true state is not directly available.
+
+\subsection{LQG structure}
+The LQG controller combines the LQR gain $K$ from Part 3 with the Kalman filter gain $L_k$ from Part 5. By the separation principle, these gains are designed independently and then connected: $u[k] = -K\hat{x}[k]$, where $\hat{x}[k]$ is produced by the Kalman filter. The stochastic system model and noise covariances $(Q_w, R_v)$ follow Part 5.
+
+\subsection{Closed-loop dynamics}
+The LQG loop consists of:
+\begin{align}
+\hat{x}[k+1] &= A_d \hat{x}[k] + B_d u[k] + L_k \bigl(y_{\mathrm{meas}}[k] - C\hat{x}[k]\bigr), \label{eq:part6_kf_update}\\
+u[k] &= -K \hat{x}[k]. \label{eq:part6_control_law}
+\end{align}
+The controller uses only the estimate $\hat{x}[k]$ reconstructed from noisy measurements.
+
+\subsection{Cost function under measurement noise}
+The quadratic performance index is evaluated using the \emph{true} output
+\begin{equation}
+y_{\mathrm{true}}[k] = Cx[k],
+\end{equation}
+rather than the noisy measurement $y_{\mathrm{meas}}[k]$. This avoids artificially inflating the cost by penalizing uncontrollable sensor noise:
+\begin{equation}
+J = \sum_{k=0}^{N-1}\Bigl(u[k]^\top u[k] + y_{\mathrm{true},1}[k]^2 + y_{\mathrm{true},6}[k]^2\Bigr).
+\label{eq:part6_cost_true_output}
+\end{equation}
+
+\subsection{Results}
+The LQG controller reuses the gains from previous parts:
+\begin{itemize}
+  \item $K \in \mathbb{R}^{3\times 12}$ (from Part 3, unchanged).
+  \item $L_k \in \mathbb{R}^{12\times 2}$ (from Part 5, unchanged).
+\end{itemize}
+
+Numerical results for the noisy closed-loop simulation are:
+\begin{itemize}
+  \item Total cost: $J = 4.260967\times 10^2$.
+  \item Maximum input magnitude: $\max_k \|u[k]\|_\infty = 4.086037\times 10^{-1}$.
+  \item RMS estimation error: $\mathrm{RMS}\bigl(\|x-\hat{x}\|\bigr)=9.573350\times 10^{-1}$.
+  \item RMS estimation error (last 20\% of samples): $5.593296\times 10^{-1}$.
+\end{itemize}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        Metric & Part 3 (No Noise) & Part 6 (LQG with Noise) \\
+        \midrule
+        Total cost $J$ & $9.057 \times 10^7$ & $4.261 \times 10^2$ \\
+        Max $\|u\|_\infty$ & $3.597 \times 10^3$ & $4.086 \times 10^{-1}$ \\
+        Estimator & Pole placement ($L$) & Kalman filter ($L_k$) \\
+        Controller & LQR ($K$) & LQR ($K$), same gain \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparison of Part 3 (deterministic) and Part 6 (stochastic LQG).}
+    \label{tab:part6_comparison}
+\end{table}
+
+\subsection{Figures}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/part6_outputs_comparison.png}
+  \caption{Outputs comparison between Part 3 baseline (no noise) and Part 6 LQG (noisy). The LQG outputs remain regulated despite process and measurement noise.}
+  \label{fig:part6_outputs_comparison}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/part6_inputs_u1_u2_u3.png}
+  \caption{LQG control inputs $u_1,u_2,u_3$ generated by $u[k] = -K\hat{x}[k]$. The inputs remain bounded and are substantially smaller in magnitude than the deterministic Part 3 case.}
+  \label{fig:part6_inputs}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/part6_estimation_error_norm.png}
+  \caption{Estimation error norm $\|x[k]-\hat{x}[k]\|$ under process noise and measurement noise. The Kalman filter maintains bounded estimation error suitable for feedback control.}
+  \label{fig:part6_est_error_norm}
+\end{figure}
+
+\subsection{Findings}
+\begin{itemize}
+  \item \textbf{Separation principle in practice.} The LQG controller is formed by combining the independently designed $K$ (LQR) and $L_k$ (Kalman filter), without re-tuning either gain.
+  \item \textbf{Stabilization under uncertainty.} Despite process and measurement noise, the outputs remain regulated, and the estimator provides usable state estimates from two noisy measurements.
+  \item \textbf{Control effort reduction.} The maximum input magnitude decreases from $3.597\times 10^3$ (Part 3) to $4.086\times 10^{-1}$ (Part 6), which is approximately a four-order-of-magnitude reduction.
+  \item \textbf{Estimator convergence behavior.} The RMS estimation error over the last 20\% of the horizon is lower than the full-window RMS, indicating convergence toward a steadier filtering regime during closed-loop operation.
+\end{itemize}
+
+
+
+
+\newpage
+
+
+\section{Part 7: Sensor Augmentation Analysis}
+
+\subsection{Objective}
+This part investigates how adding additional position sensors affects (i) state-estimation quality and (ii) closed-loop regulation performance under the same LQG control framework as Part 6. The baseline is the Part 6 LQG setup with two measured outputs. Two augmented sensing configurations are evaluated to quantify how much additional measurement information improves estimation and, through improved feedback, reduces the regulation cost.
+
+\subsection{Sensor configurations}
+Three sensing configurations are compared, all estimating the same 12-state vector but differing in the measurement matrix $C_{\mathrm{meas}} \in \mathbb{R}^{p \times 12}$:
+\begin{itemize}
+  \item \textbf{Baseline (2 sensors):} measures $(x_1, x_6)$, i.e., $p=2$.
+  \item \textbf{Case 1 (4 sensors):} measures $(x_1, x_2, x_5, x_6)$, i.e., $p=4$.
+  \item \textbf{Case 2 (6 sensors):} measures all positions $(x_1, \ldots, x_6)$, i.e., $p=6$.
+\end{itemize}
+
+\subsection{Design principles}
+\begin{itemize}
+  \item \textbf{Controller unchanged:} The LQR gain $K$ from Part 3 is fixed for all configurations; $u[k] = -K\hat{x}[k]$.
+  \item \textbf{Estimator redesigned:} The Kalman filter gain $L_k$ is recomputed for each $C_{\mathrm{meas}}$ via the DARE.
+  \item \textbf{Cost fixed:} The regulation cost \eqref{eq:cost_J} penalizes $(x_1, x_6)$ regardless of sensor count.
+  \item \textbf{Noise:} $Q_w = 0.05\,I_3$, $R_v = 0.1\,I_p$ (dimension changes with $p$).
+\end{itemize}
+
+\subsection{Results}
+Table~\ref{tab:part7_results} summarizes regulation performance and estimator behavior across sensor configurations. The steady-state RMS error refers to the RMS of $\|x-\hat{x}\|$ over the steady-state portion of the simulation (last 20\% of samples, consistent with Part 6).
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        Config & Sensors & Cost $J$ & RMS Error (SS) & Spectral Radius \\
+        \midrule
+        Part 6 & 2 ($x_1,x_6$) & 426.1 & 0.559 & 0.999547 \\
+        Case 1 & 4 ($x_1,x_2,x_5,x_6$) & 401.8 & 0.464 & 0.998968 \\
+        Case 2 & 6 ($x_1$--$x_6$) & 371.0 & 0.270 & 0.998415 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Sensor augmentation analysis results.}
+    \label{tab:part7_results}
+\end{table}
+
+In all cases, the controller gain $K$ is identical, so the peak input magnitude is unchanged across configurations (the simulations report the same $\max_k \|u[k]\|_\infty$), and the main effect of additional sensors is improved estimation quality through a redesigned $L_k$.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/part7_estimation_error_comparison.png}
+  \caption{Estimation error norm comparison $\lVert x - \hat{x}\rVert$ for baseline (2 sensors) and augmented sensing (4 and 6 sensors).}
+  \label{fig:part7_err_comp}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/part7_outputs_comparison.png}
+  \caption{Output comparison for $y_1=x_1$ and $y_6=x_6$ under augmented sensing. Improved estimation yields improved regulation of the same cost outputs.}
+  \label{fig:part7_outputs_comp}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/part7_inputs_comparison.png}
+  \caption{Input comparison for $u_1,u_2,u_3$ under augmented sensing. Because $K$ is unchanged, the control effort scale remains comparable across configurations.}
+  \label{fig:part7_inputs_comp}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/part7_per_state_rms_comparison.png}
+  \caption{Per-state steady-state RMS estimation error comparison under augmented sensing. Adding sensors reduces estimation error for unmeasured states via improved observability through measurement fusion.}
+  \label{fig:part7_rms_state}
+\end{figure}
+
+\subsection{Performance improvements and diminishing returns}
+Using the baseline (2-sensor) steady-state RMS error $0.559$ and cost $426.1$, the relative improvements are:
+\begin{itemize}
+  \item \textbf{2 to 4 sensors:} steady-state RMS error improves by $17.0\%$ (from $0.559$ to $0.464$), and cost decreases by $5.7\%$ (from $426.1$ to $401.8$).
+  \item \textbf{2 to 6 sensors:} steady-state RMS error improves by $51.7\%$ (from $0.559$ to $0.270$), and cost decreases by $12.9\%$ (from $426.1$ to $371.0$).
+\end{itemize}
+
+The results show that added sensing can produce large estimation gains, especially when moving toward full position sensing. Regulation gains, measured through the fixed cost in \eqref{eq:cost_J}, increase more moderately because the cost penalizes only $(x_1,x_6)$. This highlights a practical saturation effect: beyond a point, improved global state estimation does not translate one-to-one into reduced cost when the objective depends on only a subset of outputs.
+
+\subsection{Findings}
+\begin{itemize}
+  \item \textbf{More sensors improve estimation and regulation.} Both steady-state RMS estimation error and total cost decrease as sensors are added.
+  \item \textbf{Estimator convergence improves.} The estimator spectral radius decreases from $0.999547$ to $0.998968$ and $0.998415$, indicating faster estimator dynamics with richer measurements.
+  \item \textbf{Estimation improvement exceeds regulation improvement.} Estimation error decreases strongly with more sensors, while the cost reduction is moderated by the fixed cost structure that penalizes only $(x_1,x_6)$.
+  \item \textbf{Control effort scale is unchanged.} Since $K$ is unchanged, input magnitudes do not increase with added sensors. The main benefit comes from providing a more accurate feedback signal $\hat{x}$ for the same controller.
+  \item \textbf{Practical trade-off.} Additional sensors increase instrumentation cost and complexity. The table quantifies the performance gains available from 4 and 6 sensors, enabling a cost-benefit decision based on application constraints.
+\end{itemize}
+
+\newpage
+
+\section{Conclusion}
+
+\subsection{Summary of key findings}
+\paragraph{Parts 0--1 (System analysis).}
+The discrete-time model was validated through open-loop simulation. Observability analysis showed that a single position sensor provides only partial observability (rank $6/12$). Adding a second sensor at $x_6$ achieves full observability (rank $12/12$), enabling complete state reconstruction.
+
+\paragraph{Parts 2--4 (Deterministic control).}
+A Luenberger observer estimated all 12 states from two measurements $(x_1, x_6)$. Using these estimates, the LQR controller stabilized the plant, demonstrating the separation principle. Reduced actuation (removing $u_3$) increased the total cost by approximately $49\%$, illustrating the trade-off between actuator availability and achievable performance.
+
+\paragraph{Parts 5--7 (Stochastic control).}
+A steady-state Kalman filter provided optimal state estimation under process and measurement noise. The LQG controller (LQR + Kalman) successfully regulated the noisy system. Sensor augmentation showed that steady-state estimation error improved by up to $51.7\%$ and cost decreased by up to $12.9\%$ when moving from 2 to 6 sensors, with diminishing returns.
+
+\subsection{Key learnings}
+\begin{itemize}
+  \item \textbf{Observability is critical for state estimation.} Without sufficient measurement information, full-state reconstruction is impossible regardless of estimator design.
+  \item \textbf{Separation principle supports modular design.} The estimator and controller can be designed independently and then combined in closed loop using estimated states.
+  \item \textbf{Kalman filtering is preferable under noise.} For stochastic systems, the Kalman filter provides an optimal estimator and typically outperforms pole-placement observers when process and measurement noise are present.
+  \item \textbf{Actuator availability strongly affects performance.} Fewer inputs reduce achievable performance and can increase the required effort from remaining actuators.
+  \item \textbf{Additional sensors improve estimation with diminishing returns.} More measurements reduce estimation uncertainty and can improve regulation, but marginal gains decrease as the sensor set becomes increasingly informative.
+\end{itemize}
+
+\subsection{Design recommendations}
+\begin{itemize}
+  \item \textbf{Minimum sensing for full estimation:} Use at least two sensors at $(x_1, x_6)$ to ensure full observability and enable complete state estimation.
+  \item \textbf{Sensor augmentation trade-off:} A 4 to 6 sensor configuration yields the best performance-to-instrumentation trade-off in this study, improving estimation and reducing regulation cost beyond the 2-sensor baseline.
+  \item \textbf{Actuation:} Prefer full actuation (3 inputs) when possible. Reduced actuation remains viable but incurs a substantial performance penalty (about $49\%$ cost increase in the tested setting).
+  \item \textbf{Estimator choice in practice:} Use a Kalman filter for noisy environments, since it explicitly incorporates noise statistics and yields an optimal steady-state gain.
+\end{itemize}
+
+\paragraph{Final remarks.}
+Across Parts 0 through 7, a complete control-design pipeline was demonstrated for a high-order, lightly damped mechanical system. The workflow progressed from model verification and structural analysis (observability) to deterministic estimation and optimal control (observer/LQR), and then to stochastic estimation and control (Kalman filter/LQG), concluding with a systematic assessment of sensing augmentation. 
+
+The results demonstrate how sensing and actuation constraints shape achievable closed-loop performance. They also show that optimal estimation and control tools provide a principled framework for robust regulation under uncertainty.
+
+\end{document}
