@@ -1,0 +1,421 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\geometry{margin=1in}
+
+\title{EE571 Final Exam Bonus Problem\\
+Steering a Vehicle Along a Reference Track\\
+Discrete LQR and Pole Placement on a Linearized Error Model}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Goal and Objective}
+
+\subsection{Goal}
+
+Design and compare \textbf{two state-feedback regulators} for a vehicle trajectory-tracking task, using a \textbf{linearized error-state model} while simulating the \textbf{nonlinear bicycle-model plant}.
+
+\subsection{Objective}
+Track a \textbf{time-parameterized reference path} using a feedback controller designed on a \textbf{linearized tracking-error model}, while the closed-loop system is evaluated on the \textbf{nonlinear bicycle-model plant}.
+
+\section{Nonlinear Plant Model Used for Simulation (Bicycle Dynamics)}
+
+\subsection{Plant State and Inputs}
+
+The nonlinear plant state is:
+\begin{equation}
+\bm{x} = \begin{bmatrix} X & Y & \psi & v_x & v_y & r \end{bmatrix}^T
+\end{equation}
+where:
+\begin{itemize}
+\item $X, Y$: global position
+\item $\psi$: yaw angle (heading)
+\item $v_x, v_y$: body-frame longitudinal and lateral velocities
+\item $r$: yaw rate
+\end{itemize}
+
+The plant input is:
+\begin{equation}
+\bm{u} = \begin{bmatrix} \delta \\ a_x \end{bmatrix}
+\end{equation}
+where:
+\begin{itemize}
+\item $\delta$: steering angle input
+\item $a_x$: longitudinal acceleration command (named \texttt{throttle} in the MATLAB file)
+\end{itemize}
+
+\subsection{Kinematics}
+
+The handout and code use:
+\begin{align}
+\dot{X} &= v_x\cos\psi - v_y\sin\psi \\
+\dot{Y} &= v_x\sin\psi + v_y\cos\psi \\
+\dot{\psi} &= r
+\end{align}
+
+\subsection{Tire Slip and Lateral Forces (Small-Angle Approximation, $v_x > 0$)}
+
+Slip angles:
+\begin{align}
+\alpha_f &\approx \delta - \frac{v_y + l_f r}{v_x} \\
+\alpha_r &\approx -\frac{v_y - l_r r}{v_x}
+\end{align}
+
+Linear tire model:
+\begin{align}
+F_{yf} &= C_f \alpha_f \\
+F_{yr} &= C_r \alpha_r
+\end{align}
+
+\subsection{Dynamics}
+\begin{align}
+\dot{v}_x &= a_x + r v_y \\
+\dot{v}_y &= \frac{F_{yf}+F_{yr}}{m} - r v_x \\
+\dot{r} &= \frac{l_f F_{yf}-l_r F_{yr}}{I_z}
+\end{align}
+
+This completes the nonlinear plant $\dot{\bm{x}} = f(\bm{x},\bm{u})$. In the code, the plant is integrated with RK4 using a smaller internal step $\texttt{dt\_int} = T_s/10$, and the input is held constant over each sampling interval (ZOH).
+
+\subsection{Parameters Used in \texttt{vehicle\_dlqr.m}}
+
+Near the top of the script:
+\begin{itemize}
+\item $m = 1500\,\mathrm{kg}$
+\item $I_z = 2500\,\mathrm{kg\cdot m^2}$
+\item $l_f = 1.2\,\mathrm{m}$, $l_r = 1.6\,\mathrm{m}$
+\item $C_f = 80000\,\mathrm{N/rad}$, $C_r = 80000\,\mathrm{N/rad}$
+\end{itemize}
+
+where $C_f, C_r$ are cornering stiffnesses, and $l_f, l_r$ are distances from CG to front and rear axles.
+
+\section{Reference Trajectory and Tracking-Error Definitions}
+
+\subsection{Reference Signals}
+
+The reference is time-parameterized:
+\begin{equation}
+\big(X_{\mathrm{ref}}(t), Y_{\mathrm{ref}}(t), \psi_{\mathrm{ref}}(t), v_{\mathrm{ref}}(t), \kappa_{\mathrm{ref}}(t)\big)
+\end{equation}
+
+Reference yaw-rate relation:
+\begin{equation}
+\dot{\psi}_{\mathrm{ref}}(t) = v_{\mathrm{ref}}(t)\,\kappa_{\mathrm{ref}}(t)
+\end{equation}
+
+\subsection{How the MATLAB File Generates the Reference}
+
+In \texttt{vehicle\_dlqr.m}:
+\begin{itemize}
+\item Sample time: $T_s = 0.02\,\mathrm{s}$ (50 Hz)
+\item Duration: $T_{\mathrm{end}} = 25\,\mathrm{s}$
+\item Nominal speed used for linearization: $V_{x0} = 15\,\mathrm{m/s}$
+\end{itemize}
+
+Curvature and speed profiles:
+\begin{align}
+\kappa_{\mathrm{ref}}(t) &= 0.01\sin(0.35t) + 0.005\sin(0.10t) \quad [1/\mathrm{m}] \\
+v_{\mathrm{ref}}(t) &= V_{x0} + 1.0\sin(0.15t) \quad [\mathrm{m/s}]
+\end{align}
+
+Reference acceleration is approximated by finite difference:
+\begin{equation}
+a_{\mathrm{ref}}(t) \approx \frac{v_{\mathrm{ref}}(t+T_s)-v_{\mathrm{ref}}(t)}{T_s}
+\end{equation}
+
+The function \texttt{integrate\_reference(t, v\_ref, kappa\_ref)} computes:
+\begin{align}
+\dot{\psi}_{\mathrm{ref}} &= v_{\mathrm{ref}}\kappa_{\mathrm{ref}} \\
+\dot{X}_{\mathrm{ref}} &= v_{\mathrm{ref}}\cos\psi_{\mathrm{ref}} \\
+\dot{Y}_{\mathrm{ref}} &= v_{\mathrm{ref}}\sin\psi_{\mathrm{ref}}
+\end{align}
+using simple forward-Euler integration.
+
+\subsection{Tracking Errors Used for Regulation}
+
+Define position error:
+\begin{equation}
+\bm{e}_p = \begin{bmatrix} X-X_{\mathrm{ref}} \\ Y-Y_{\mathrm{ref}} \end{bmatrix}
+\end{equation}
+
+Define the reference normal vector:
+\begin{equation}
+\hat{\bm{n}} = \begin{bmatrix} -\sin\psi_{\mathrm{ref}} \\ \cos\psi_{\mathrm{ref}} \end{bmatrix}
+\end{equation}
+
+Cross-track error:
+\begin{equation}
+e_y = \hat{\bm{n}}^T \bm{e}_p
+\end{equation}
+
+Heading error (wrapped to $[-\pi, \pi]$):
+\begin{equation}
+e_\psi = \mathrm{wrapToPi}(\psi-\psi_{\mathrm{ref}})
+\end{equation}
+
+Speed error (the code uses longitudinal speed):
+\begin{equation}
+e_v = v_x - v_{\mathrm{ref}}
+\end{equation}
+
+\section{Linearized Tracking-Error Model Used for Controller Design}
+
+The handout emphasizes that the plant is nonlinear, so control is designed on a \textbf{linear error model} obtained by linearizing around a nominal operating point.
+
+\subsection{Nominal Operating Point}
+
+The linear model assumes:
+\begin{equation}
+v_x \approx V_{x0} > 0,\quad v_y \approx 0,\quad r \approx 0,\quad \delta \approx 0
+\end{equation}
+
+In the MATLAB file: $V_{x0} = 15$.
+
+\subsection{Lateral-Yaw Linear Approximation}
+
+The standard linear model uses:
+\begin{equation}
+\begin{bmatrix}\dot{v}_y \\ \dot{r}\end{bmatrix}
+=
+A_{\mathrm{lat}}
+\begin{bmatrix}v_y\\r\end{bmatrix}
++
+B_\delta\,\delta
+\end{equation}
+
+with:
+\begin{align}
+A_{\mathrm{lat}} &=
+\begin{bmatrix}
+-\frac{C_f+C_r}{mV_{x0}} &
+-\Big(V_{x0}+\frac{l_fC_f-l_rC_r}{mV_{x0}}\Big)\\
+-\frac{l_fC_f-l_rC_r}{I_zV_{x0}} &
+-\frac{l_f^2C_f+l_r^2C_r}{I_zV_{x0}}
+\end{bmatrix} \\
+B_\delta &=
+\begin{bmatrix}
+\frac{C_f}{m}\\
+\frac{l_fC_f}{I_z}
+\end{bmatrix}
+\end{align}
+
+This matches how the script defines \texttt{A11, A12, A21, A22} and the steering-input terms \texttt{Bvydelta, Brdelta}.
+
+\subsection{Error-State Vector for Control Design}
+
+The handout and code define a 5-state error vector:
+\begin{equation}
+\bm{x}_e = \begin{bmatrix} v_y \\ r \\ e_y \\ e_\psi \\ e_v \end{bmatrix}
+\end{equation}
+
+The regulation input is:
+\begin{equation}
+\bm{u}_{\mathrm{reg}} = \begin{bmatrix} \delta_{\mathrm{reg}} \\ a_{x,\mathrm{reg}} \end{bmatrix}
+\end{equation}
+
+\subsection{Error Propagation Equations Used in the Script}
+
+The original handout indicates the error derivatives include reference terms:
+\begin{align}
+\dot{e}_y &\approx v_y + V_{x0}e_\psi \\
+\dot{e}_\psi &\approx r - V_{x0}\kappa_{\mathrm{ref}}(t) \\
+\dot{e}_v &\approx a_x - a_{\mathrm{ref}}(t)
+\end{align}
+
+However, the MATLAB script handles the reference curvature and acceleration terms via \textbf{feedforward}, so the \textbf{regulation model} used to build $(A_c, B_c)$ uses the simpler forms:
+\begin{align}
+\dot{e}_y &\approx v_y + V_{x0}e_\psi \\
+\dot{e}_\psi &\approx r \\
+\dot{e}_v &\approx a_x
+\end{align}
+
+This separation allows the feedforward to handle the reference tracking while the regulator focuses on error correction.
+
+\subsection{Continuous-Time State Space Form in \texttt{vehicle\_dlqr.m}}
+
+The script constructs:
+\begin{equation}
+\dot{\bm{x}}_e = A_c \bm{x}_e + B_c \bm{u}_{\mathrm{reg}}
+\end{equation}
+
+with $A_c \in \mathbb{R}^{5\times 5}$, $B_c \in \mathbb{R}^{5\times 2}$. The matrix structure in the code is:
+\begin{itemize}
+\item Rows 1 to 2: lateral-yaw dynamics for $[v_y, r]$ driven by $\delta$
+\item Row 3: $\dot{e}_y = v_y + V_{x0} e_\psi$
+\item Row 4: $\dot{e}_\psi = r$
+\item Row 5: $\dot{e}_v = a_x$
+\end{itemize}
+
+\section{Control Structure: Feedforward Plus Feedback Regulation}
+
+The required structure is:
+\begin{equation}
+\bm{u} = \bm{u}_{\mathrm{ff}}(t) + \bm{u}_{\mathrm{reg}}(\bm{x}_e)
+\end{equation}
+
+\subsection{Feedforward Terms Provided in the MATLAB Script}
+
+Inside the simulation loop, the script defines starter feedforward:
+
+\begin{itemize}
+\item Steering feedforward:
+  \begin{equation}
+  \delta_{\mathrm{ff}} \approx (l_f+l_r)\kappa_{\mathrm{ref}}(t)
+  \end{equation}
+  This is the geometric relation $\delta \approx L\kappa$ for small angles, where $L = l_f + l_r$ is the wheelbase.
+
+\item Longitudinal acceleration feedforward:
+  \begin{equation}
+  a_{x,\mathrm{ff}} = a_{\mathrm{ref}}(t) = \dot{v}_{\mathrm{ref}}(t)
+  \end{equation}
+\end{itemize}
+
+The feedforward terms make the vehicle follow the reference in an ideal, error-free case, while the regulator stabilizes and drives the error states toward zero.
+
+\subsection{What You Must Compute}
+
+You must compute \texttt{steering\_reg} and \texttt{ax\_reg} using one of the two regulators, then combine:
+\begin{itemize}
+\item \texttt{steering\_input = steering\_feed\_forward + steering\_reg}
+\item \texttt{throttle = throttle\_feed\_forward + ax\_reg}
+\end{itemize}
+
+The script already applies saturations after this combination:
+\begin{itemize}
+\item steering limited to $\pm 25$ degrees
+\item acceleration limited to $[-6, 3]\,\mathrm{m/s^2}$
+\end{itemize}
+
+\section{Discretization and Simulation Timing}
+
+\subsection{Discretize the Continuous Error Model (Required)}
+
+You must discretize $(A_c, B_c)$ using \textbf{zero-order hold} at $T_s$:
+\begin{equation}
+\bm{x}_{e,k+1} = A_d \bm{x}_{e,k} + B_d \bm{u}_{\mathrm{reg},k}
+\end{equation}
+
+The script includes an exact ZOH helper: \texttt{c2d\_zoh\_exact(A, B, Ts)}.
+
+It uses the augmented matrix exponential identity:
+\begin{equation}
+\exp\left(\begin{bmatrix} A & B \\ 0 & 0 \end{bmatrix} T_s\right)
+=
+\begin{bmatrix} A_d & B_d \\ 0 & I \end{bmatrix}
+\end{equation}
+
+You can use this function directly and avoid relying on MATLAB's \texttt{c2d} function.
+
+\subsection{Simulation of the Nonlinear Plant}
+
+The plant is integrated with RK4 using an internal step:
+\begin{itemize}
+\item $\texttt{dt\_int} = T_s/10$
+\end{itemize}
+
+Inputs are held constant within each $T_s$ interval, which matches the ZOH assumption used for discretizing the controller model.
+
+\section{Regulator 1: Discrete-Time Infinite-Horizon LQR (DLQR)}
+
+After discretization, DLQR solves the discrete algebraic Riccati equation for an infinite-horizon quadratic cost:
+\begin{equation}
+J = \sum_{k=0}^{\infty} \left(\bm{x}_{e,k}^T Q \bm{x}_{e,k} + \bm{u}_{\mathrm{reg},k}^T R \bm{u}_{\mathrm{reg},k}\right)
+\end{equation}
+
+and yields:
+\begin{equation}
+\bm{u}_{\mathrm{reg},k} = -K_{\mathrm{LQR}} \bm{x}_{e,k}
+\end{equation}
+
+\subsection{Implementation Steps}
+
+\begin{enumerate}
+\item Compute \texttt{[Ad, Bd] = c2d\_zoh\_exact(Ac, Bc, Ts)}.
+\item Choose $Q \succeq 0$ (5×5) and $R \succ 0$ (2×2), symmetric and positive semi-definite / definite respectively.
+\item In MATLAB, compute \texttt{[K\_LQR, ~, ~] = dlqr(Ad, Bd, Q, R)}.
+\item In the simulation loop form:
+  \begin{equation}
+  \bm{x}_e = [v_y,\ r,\ e_y,\ e_\psi,\ e_v]^T
+  \end{equation}
+  then compute \texttt{u\_reg = -K\_LQR * x\_e}.
+\end{enumerate}
+
+\section{Regulator 2: Discrete-Time Pole Placement (Real Poles Only)}
+
+Pole placement chooses a gain $K_{\mathrm{PP}}$ so that the closed-loop discrete matrix:
+\begin{equation}
+A_{\mathrm{cl}} = A_d - B_d K_{\mathrm{PP}}
+\end{equation}
+
+has desired eigenvalues (poles).
+
+\subsection{Constraints from the Problem Statement}
+
+\begin{itemize}
+\item Choose \textbf{real} poles only (no complex pole locations).
+\item For discrete time, stable poles must lie inside the unit circle.
+\end{itemize}
+
+\subsection{Practical Notes}
+
+\begin{itemize}
+\item If $(A_d, B_d)$ is not fully controllable, you can only assign poles of the controllable modes. The uncontrollable modes remain fixed.
+\item Because the input $\bm{u}$ is 2D, you will select 5 poles total only if the discrete system is controllable. Otherwise, you select poles for the controllable subspace.
+\item In MATLAB you typically use: \texttt{K\_PP = place(Ad, Bd, desired\_poles)} (or \texttt{acker} for SISO systems).
+\end{itemize}
+
+\section{Initial-Condition Scaling Experiments (Default, ×2, ×3)}
+
+The MATLAB file's default initial condition (referenced as ``line 87'' in the problem statement) offsets the plant from the reference:
+\begin{equation}
+[X(0),Y(0),\psi(0),v_x(0)] = [X_{\mathrm{ref}}(0)-2.0\,\mathrm{m},\;Y_{\mathrm{ref}}(0)+1.0\,\mathrm{m},\;\psi_{\mathrm{ref}}(0)+8^\circ,\;V_{x0}-5\,\mathrm{m/s}]
+\end{equation}
+
+and:
+\begin{equation}
+v_y(0)=0,\quad r(0)=0
+\end{equation}
+
+To form the ×2 and ×3 cases, scale these offsets from the reference by factors 2 and 3, while keeping the reference itself unchanged.
+
+\subsection{Implementation Pattern}
+
+\begin{enumerate}
+\item Build the baseline offset $\Delta \bm{x}_0$ relative to $(X_{\mathrm{ref}}(0), Y_{\mathrm{ref}}(0), \psi_{\mathrm{ref}}(0), V_{x0})$.
+\item For scale $s \in \{1,2,3\}$, set $\bm{x}_0 = \bm{x}_{\mathrm{ref},0} + s\Delta \bm{x}_0$.
+\item Run the same simulation for each $s$ and for each regulator.
+\end{enumerate}
+
+\section{Additional Notes}
+
+\subsection{Integration Method}
+
+The nonlinear plant is simulated with RK4 using an internal integration step $\texttt{dt\_int} = T_s/10$. The controller updates every $T_s$ and holds inputs constant within each sample interval, which matches the ZOH assumption used for discretizing the controller model.
+
+\subsection{Saturations}
+
+The script applies saturations after combining feedforward and regulation inputs:
+\begin{itemize}
+\item Steering: $\delta \in [-25^\circ, +25^\circ]$
+\item Acceleration: $a_x \in [-6, +3]\,\mathrm{m/s^2}$
+\end{itemize}
+
+These limits are applied each control update.
+
+\subsection{Reference Integration}
+
+The function \texttt{integrate\_reference(t, v\_ref, kappa\_ref)} computes the reference pose using simple forward-Euler integration:
+\begin{itemize}
+\item $\psi_{\mathrm{ref}}$ via $\psi_{\mathrm{ref},k+1} = \psi_{\mathrm{ref},k} + T_s\,v_{\mathrm{ref},k}\kappa_{\mathrm{ref},k}$
+\item $X_{\mathrm{ref}}$ and $Y_{\mathrm{ref}}$ via Euler integration using $v_{\mathrm{ref}}\cos\psi_{\mathrm{ref}}$ and $v_{\mathrm{ref}}\sin\psi_{\mathrm{ref}}$
+\end{itemize}
+
+\end{document}

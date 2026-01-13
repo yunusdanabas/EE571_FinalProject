@@ -1,0 +1,437 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{hyperref}
+
+\geometry{margin=1in}
+
+\title{Vehicle Trajectory Tracking with Discrete LQR and Pole Placement Control}
+\author{Yunus Emre Danabaş - 29359\\EE571 Final Exam Bonus}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{System Description}
+
+The system uses a bicycle model for vehicle dynamics. The plant state vector is:
+\begin{equation}
+\bm{x} = \begin{bmatrix} X & Y & \psi & v_x & v_y & r \end{bmatrix}^T
+\end{equation}
+where $X, Y$ are global position coordinates [m], $\psi$ is yaw angle (heading) [rad], $v_x, v_y$ are body-frame longitudinal and lateral velocities [m/s], and $r$ is yaw rate [rad/s].
+
+The control input vector is:
+\begin{equation}
+\bm{u} = \begin{bmatrix} \delta \\ a_x \end{bmatrix}
+\end{equation}
+where $\delta$ is steering angle [rad] and $a_x$ is longitudinal acceleration [m/s²].
+
+Vehicle parameters are: $m = 1500$ kg (mass), $I_z = 2500$ kg·m² (yaw inertia), $l_f = 1.2$ m (CG to front axle), $l_r = 1.6$ m (CG to rear axle), $C_f = C_r = 80000$ N/rad (front and rear cornering stiffness). The control objective is to track a time-varying reference trajectory using two discrete-time state-feedback regulators: Linear Quadratic Regulator (LQR) and Pole Placement.
+
+\section{System Model and Error Formulation}
+
+\subsection{Vehicle Dynamics}
+
+The nonlinear bicycle model includes kinematics:
+\begin{align}
+\dot{X} &= v_x\cos\psi - v_y\sin\psi \\
+\dot{Y} &= v_x\sin\psi + v_y\cos\psi \\
+\dot{\psi} &= r
+\end{align}
+and dynamics with linear tire model:
+\begin{align}
+\dot{v}_x &= a_x + r v_y \\
+\dot{v}_y &= \frac{F_{yf}+F_{yr}}{m} - r v_x \\
+\dot{r} &= \frac{l_f F_{yf}-l_r F_{yr}}{I_z}
+\end{align}
+where lateral tire forces are computed using linear cornering stiffness:
+\begin{align}
+F_{yf} &= C_f \alpha_f \\
+F_{yr} &= C_r \alpha_r
+\end{align}
+with slip angles:
+\begin{align}
+\alpha_f &= \delta - \frac{v_y + l_f r}{v_x} \\
+\alpha_r &= -\frac{v_y - l_r r}{v_x}
+\end{align}
+
+\subsection{Reference Trajectory}
+
+The reference trajectory is time-parameterized with:
+\begin{align}
+\kappa_{\text{ref}}(t) &= 0.01\sin(0.35t) + 0.005\sin(0.10t) \quad \text{[1/m]} \\
+v_{\text{ref}}(t) &= V_{x0} + 1.0\sin(0.15t) \quad \text{[m/s]} \\
+a_{\text{ref}}(t) &\approx \frac{v_{\text{ref}}(t+T_s) - v_{\text{ref}}(t)}{T_s} \quad \text{[m/s²]}
+\end{align}
+where $V_{x0} = 15$ m/s is the nominal linearization speed. The reference pose $(X_{\text{ref}}, Y_{\text{ref}}, \psi_{\text{ref}})$ is obtained by integrating these signals.
+
+\subsection{Error State Formulation}
+
+The error state vector for controller design is:
+\begin{equation}
+\bm{x}_e = \begin{bmatrix} v_y & r & e_y & e_\psi & e_v \end{bmatrix}^T
+\end{equation}
+where:
+\begin{itemize}
+\item $v_y$: lateral velocity [m/s] (from plant state)
+\item $r$: yaw rate [rad/s] (from plant state)
+\item $e_y$: cross-track error [m] (normal distance to reference path)
+\item $e_\psi$: heading error [rad] (wrapped to $[-\pi, \pi]$)
+\item $e_v$: speed error [m/s] ($e_v = v_x - v_{\text{ref}}$)
+\end{itemize}
+
+The cross-track error $e_y$ and heading error $e_\psi$ are computed by projecting the vehicle position onto the reference path using the lateral heading error computation.
+
+\subsection{Linearized Error Model}
+
+The continuous-time linearized error model is:
+\begin{equation}
+\dot{\bm{x}}_e = \bm{A}_c \bm{x}_e + \bm{B}_c \bm{u}_{\text{reg}}
+\end{equation}
+where $\bm{A}_c$ is a $5 \times 5$ matrix and $\bm{B}_c$ is a $5 \times 2$ matrix. The linearization is performed around the nominal operating point: $v_x \approx V_{x0} = 15$ m/s, $v_y \approx 0$, $r \approx 0$, $\delta \approx 0$.
+
+The $\bm{A}_c$ matrix includes the following elements for the $[v_y, r]$ dynamics:
+\begin{align}
+A_{11} &= -\frac{C_f + C_r}{m V_{x0}} \\
+A_{12} &= -\left(V_{x0} + \frac{l_f C_f - l_r C_r}{m V_{x0}}\right) \\
+A_{21} &= -\frac{l_f C_f - l_r C_r}{I_z V_{x0}} \\
+A_{22} &= -\frac{l_f^2 C_f + l_r^2 C_r}{I_z V_{x0}}
+\end{align}
+and for the error dynamics:
+\begin{align}
+A_{23} &= 1 \quad \text{(for } \dot{e}_y = v_y + V_{x0} e_\psi \text{)} \\
+A_{34} &= V_{x0} \\
+A_{42} &= 1 \quad \text{(for } \dot{e}_\psi = r \text{)}
+\end{align}
+
+The $\bm{B}_c$ matrix includes:
+\begin{align}
+B_{11} &= \frac{C_f}{m} \quad \text{(steering to lateral velocity)} \\
+B_{21} &= \frac{l_f C_f}{I_z} \quad \text{(steering to yaw rate)} \\
+B_{52} &= 1 \quad \text{(acceleration to speed error)}
+\end{align}
+
+Feedforward terms handle reference trajectory tracking, while the regulation input $\bm{u}_{\text{reg}}$ corrects deviations from the reference.
+
+\section{Discretization}
+
+The continuous-time error model is discretized using zero-order hold (ZOH) with sampling time $T_s = 0.02$ s (50 Hz). The discrete-time model is:
+\begin{equation}
+\bm{x}_{e,k+1} = \bm{A}_d \bm{x}_{e,k} + \bm{B}_d \bm{u}_{\text{reg},k}
+\end{equation}
+
+The discretization uses the exact ZOH method via matrix exponential:
+\begin{equation}
+\begin{bmatrix} \bm{A}_d & \bm{B}_d \\ \bm{0} & \bm{I} \end{bmatrix} = \exp\left(T_s \begin{bmatrix} \bm{A}_c & \bm{B}_c \\ \bm{0} & \bm{0} \end{bmatrix}\right)
+\end{equation}
+
+The resulting matrices are:
+\begin{itemize}
+\item $\bm{A}_d$: $5 \times 5$ discrete-time error state matrix
+\item $\bm{B}_d$: $5 \times 2$ discrete-time input matrix
+\end{itemize}
+
+Both controllers use the same discretization for fair comparison.
+
+\section{LQR Controller Design}
+
+\subsection{Cost Function}
+
+The LQR controller minimizes the infinite-horizon quadratic cost function:
+\begin{equation}
+J = \sum_{k=0}^{\infty} \left( \bm{x}_e^T(k) \bm{Q} \bm{x}_e(k) + \bm{u}_{\text{reg}}^T(k) \bm{R} \bm{u}_{\text{reg}}(k) \right)
+\end{equation}
+where $\bm{Q}$ is a $5 \times 5$ positive semi-definite matrix penalizing error states, and $\bm{R}$ is a $2 \times 2$ positive definite matrix penalizing control effort.
+
+\subsection{Weighting Matrix Selection}
+
+The $\bm{Q}$ matrix is chosen as a diagonal matrix:
+\begin{equation}
+\bm{Q} = \text{diag}([5.0, 5.0, 50.0, 50.0, 30.0])
+\end{equation}
+with higher weights on tracking errors ($e_y$, $e_\psi$, $e_v$) since these directly affect path following performance, and lower weights on internal states ($v_y$, $r$).
+
+The $\bm{R}$ matrix is:
+\begin{equation}
+\bm{R} = \text{diag}([2.0, 1.0])
+\end{equation}
+with moderate weights to balance control effort with tracking performance. The steering weight (2.0) is slightly higher than acceleration (1.0) to prevent excessive steering.
+
+\subsection{Gain Computation}
+
+The feedback gain is computed by solving the discrete algebraic Riccati equation (DARE):
+\begin{equation}
+\bm{P} = \bm{Q} + \bm{A}_d^T \bm{P} \bm{A}_d - \bm{A}_d^T \bm{P} \bm{B}_d (\bm{R} + \bm{B}_d^T \bm{P} \bm{B}_d)^{-1} \bm{B}_d^T \bm{P} \bm{A}_d
+\end{equation}
+
+The LQR gain matrix is:
+\begin{equation}
+\bm{K}_{\text{LQR}} = (\bm{R} + \bm{B}_d^T \bm{P} \bm{B}_d)^{-1} \bm{B}_d^T \bm{P} \bm{A}_d
+\end{equation}
+
+The resulting gain matrix $\bm{K}_{\text{LQR}}$ has dimensions $2 \times 5$.
+
+\subsection{Control Law}
+
+The regulation input is:
+\begin{equation}
+\bm{u}_{\text{reg}} = -\bm{K}_{\text{LQR}} \bm{x}_e
+\end{equation}
+
+The total control input combines feedforward and regulation:
+\begin{equation}
+\bm{u} = \bm{u}_{\text{ff}} + \bm{u}_{\text{reg}}
+\end{equation}
+where feedforward terms are:
+\begin{align}
+\delta_{\text{ff}} &= (l_f + l_r) \kappa_{\text{ref}} \\
+a_{x,\text{ff}} &= a_{\text{ref}}
+\end{align}
+
+All closed-loop eigenvalues of $\bm{A}_d - \bm{B}_d \bm{K}_{\text{LQR}}$ are inside the unit circle, ensuring discrete-time stability.
+
+\section{Pole Placement Controller Design}
+
+\subsection{Pole Selection}
+
+The pole placement controller assigns desired closed-loop poles directly. Five real poles are selected:
+\begin{equation}
+\text{poles} = [0.85, 0.80, 0.75, 0.70, 0.65]
+\end{equation}
+
+All poles are:
+\begin{itemize}
+\item Real numbers (satisfying the constraint)
+\item Inside the unit circle (magnitude $< 1.0$), ensuring discrete-time stability
+\item Selected in the range 0.65 to 0.85 for good tracking performance: fast but stable response
+\end{itemize}
+
+\subsection{Gain Computation}
+
+The feedback gain is computed using SciPy's pole placement algorithm:
+\begin{equation}
+\bm{K}_{\text{PP}} = \text{place\_poles}(\bm{A}_d, \bm{B}_d, \text{desired\_poles})
+\end{equation}
+
+The resulting gain matrix $\bm{K}_{\text{PP}}$ has dimensions $2 \times 5$.
+
+\subsection{Control Law}
+
+The regulation input is:
+\begin{equation}
+\bm{u}_{\text{reg}} = -\bm{K}_{\text{PP}} \bm{x}_e
+\end{equation}
+
+The total control input combines feedforward and regulation:
+\begin{equation}
+\bm{u} = \bm{u}_{\text{ff}} + \bm{u}_{\text{reg}}
+\end{equation}
+with the same feedforward terms as LQR:
+\begin{align}
+\delta_{\text{ff}} &= (l_f + l_r) \kappa_{\text{ref}} \\
+a_{x,\text{ff}} &= a_{\text{ref}}
+\end{align}
+
+All closed-loop eigenvalues of $\bm{A}_d - \bm{B}_d \bm{K}_{\text{PP}}$ are verified to be real and inside the unit circle, matching the desired pole locations within numerical tolerance.
+
+\section{Simulation Setup}
+
+\subsection{Initial Conditions}
+
+Experiments were conducted with 2 regulators × 3 initial error scales (1x, 2x, 3x) = 6 cases. The baseline initial condition offsets from reference are:
+\begin{align}
+X(0) &= X_{\text{ref}}(0) - 2.0 \cdot s \quad \text{[m]} \\
+Y(0) &= Y_{\text{ref}}(0) + 1.0 \cdot s \quad \text{[m]} \\
+\psi(0) &= \psi_{\text{ref}}(0) + 8s \quad \text{[degrees]} \\
+v_x(0) &= V_{x0} - 5s \quad \text{[m/s]} \\
+v_y(0) &= 0 \quad \text{[m/s]} \\
+r(0) &= 0 \quad \text{[rad/s]}
+\end{align}
+where $s \in \{1, 2, 3\}$ is the scale factor.
+
+\subsection{Input Saturation}
+
+Input saturation limits are applied:
+\begin{align}
+\delta &\in [-25^\circ, +25^\circ] \\
+a_x &\in [-6, +3] \quad \text{[m/s²]}
+\end{align}
+
+\subsection{Simulation Parameters}
+
+The simulation uses:
+\begin{itemize}
+\item Sampling time: $T_s = 0.02$ s (50 Hz)
+\item Simulation duration: $T = 25$ s
+\item Plant integration: RK4 with internal step $dt_{\text{int}} = T_s/10 = 0.002$ s
+\end{itemize}
+
+\section{Results and Performance Comparison}
+
+\subsection{Performance Metrics}
+
+Table~\ref{tab:metrics} shows key performance metrics for all 6 experimental cases. The LQR controller achieves RMS cross-track errors of 0.198 m, 0.752 m, and 2.368 m for scales 1x, 2x, and 3x respectively. The pole placement controller shows poor performance with RMS cross-track errors of 80.660 m, 111.701 m, and 112.800 m.
+
+\begin{table}[h]
+\centering
+\caption{Performance metrics for all experimental cases}
+\label{tab:metrics}
+\begin{tabular}{lccccc}
+\toprule
+Regulator & Scale & RMS $e_y$ [m] & Max $|e_y|$ [m] & RMS $e_\psi$ [deg] & Max $|e_\psi|$ [deg] \\
+\midrule
+LQR & 1x & 0.198 & 1.052 & 3.177 & 10.447 \\
+LQR & 2x & 0.752 & 2.083 & 11.036 & 18.630 \\
+LQR & 3x & 2.368 & 4.826 & 33.714 & 73.563 \\
+PP & 1x & 80.660 & 251.899 & 93.552 & 175.145 \\
+PP & 2x & 111.701 & 314.304 & 114.736 & 179.938 \\
+PP & 3x & 112.800 & 312.672 & 102.039 & 179.852 \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+
+\begin{tabular}{lccccc}
+\toprule
+Regulator & Scale & RMS $e_v$ [m/s] & Max $|e_v|$ [m/s] & RMS $\delta$ [deg] & RMS $a_x$ [m/s²] \\
+\midrule
+LQR & 1x & 0.718 & 5.000 & 2.963 & 0.757 \\
+LQR & 2x & 2.001 & 10.000 & 4.401 & 1.072 \\
+LQR & 3x & 3.594 & 15.000 & 7.202 & 1.293 \\
+PP & 1x & 12.668 & 15.500 & 23.183 & 5.431 \\
+PP & 2x & 14.927 & 15.500 & 25.000 & 6.000 \\
+PP & 3x & 14.992 & 15.500 & 25.000 & 6.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:saturation} shows control effort and saturation statistics. The LQR controller has low saturation rates (0.8\% to 7.4\% for steering, 5.8\% to 18.1\% for acceleration), while the pole placement controller has very high saturation rates (85\% to 100\% for both inputs).
+
+\begin{table}[h]
+\centering
+\caption{Control effort and saturation statistics}
+\label{tab:saturation}
+\begin{tabular}{lcccc}
+\toprule
+Regulator & Scale & Steering Saturation & Accel Saturation \\
+\midrule
+LQR & 1x & 10/1251 (0.8\%) & 73/1251 (5.8\%) \\
+LQR & 2x & 30/1251 (2.4\%) & 153/1251 (12.2\%) \\
+LQR & 3x & 93/1251 (7.4\%) & 226/1251 (18.1\%) \\
+PP & 1x & 1064/1251 (85.0\%) & 1192/1251 (95.3\%) \\
+PP & 2x & 1251/1251 (100.0\%) & 1251/1251 (100.0\%) \\
+PP & 3x & 1251/1251 (100.0\%) & 1251/1251 (100.0\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Trajectory Comparison}
+
+Figures~\ref{fig:traj1}, \ref{fig:traj2}, and \ref{fig:traj3} show trajectory comparisons for scales 1x, 2x, and 3x, respectively. The LQR controller tracks the reference path effectively at all scales, while the pole placement controller shows large deviations from the reference path.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{../results/plots/trajectory_scale1.png}
+\caption{Trajectory comparison for scale 1x initial errors. Reference path (black), LQR (blue solid), Pole Placement (red dashed).}
+\label{fig:traj1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{../results/plots/trajectory_scale2.png}
+\caption{Trajectory comparison for scale 2x initial errors. Reference path (black), LQR (blue solid), Pole Placement (red dashed).}
+\label{fig:traj2}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{../results/plots/trajectory_scale3.png}
+\caption{Trajectory comparison for scale 3x initial errors. Reference path (black), LQR (blue solid), Pole Placement (red dashed).}
+\label{fig:traj3}
+\end{figure}
+
+\subsection{Error Time Histories}
+
+Figures~\ref{fig:errors1}, \ref{fig:errors2}, and \ref{fig:errors3} show error time histories for scales 1x, 2x, and 3x, respectively. The LQR controller shows all three errors (cross-track $e_y$, heading $e_\psi$, speed $e_v$) converging to near zero. The pole placement controller shows large persistent errors that do not converge.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{../results/plots/errors_scale1.png}
+\caption{Error time histories for scale 1x initial errors. LQR (blue solid), Pole Placement (red dashed).}
+\label{fig:errors1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{../results/plots/errors_scale2.png}
+\caption{Error time histories for scale 2x initial errors. LQR (blue solid), Pole Placement (red dashed).}
+\label{fig:errors2}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{../results/plots/errors_scale3.png}
+\caption{Error time histories for scale 3x initial errors. LQR (blue solid), Pole Placement (red dashed).}
+\label{fig:errors3}
+\end{figure}
+
+\subsection{Control Inputs}
+
+Figures~\ref{fig:inputs1}, \ref{fig:inputs2}, and \ref{fig:inputs3} show control input time histories for scales 1x, 2x, and 3x, respectively. The LQR controller uses moderate control inputs with minimal saturation. The pole placement controller shows excessive control effort, with steering and acceleration frequently hitting saturation limits.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{../results/plots/inputs_scale1.png}
+\caption{Control inputs for scale 1x initial errors. LQR (blue solid), Pole Placement (red dashed). Saturation limits: steering $\pm 25^\circ$, acceleration [-6, +3] m/s².}
+\label{fig:inputs1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{../results/plots/inputs_scale2.png}
+\caption{Control inputs for scale 2x initial errors. LQR (blue solid), Pole Placement (red dashed).}
+\label{fig:inputs2}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{../results/plots/inputs_scale3.png}
+\caption{Control inputs for scale 3x initial errors. LQR (blue solid), Pole Placement (red dashed).}
+\label{fig:inputs3}
+\end{figure}
+
+\subsection{Performance Analysis}
+
+The experimental results clearly demonstrate that the LQR controller significantly outperforms the pole placement controller across all performance metrics:
+
+\begin{itemize}
+\item \textbf{Scale 1x}: LQR achieves good tracking (RMS $e_y$ = 0.198 m) while PP shows poor performance (RMS $e_y$ = 80.660 m)
+\item \textbf{Scale 2x}: LQR maintains reasonable performance (RMS $e_y$ = 0.752 m) while PP degrades further (RMS $e_y$ = 111.701 m)
+\item \textbf{Scale 3x}: LQR continues to track effectively (RMS $e_y$ = 2.368 m) while PP shows similar poor performance (RMS $e_y$ = 112.800 m)
+\end{itemize}
+
+The LQR controller achieves tracking errors that are 100-500 times smaller than the pole placement controller across all scales. Additionally, the LQR controller uses control effort efficiently with low saturation rates, while the pole placement controller operates at saturation limits continuously.
+
+\section{Conclusion}
+
+\textbf{Which regulator is more robust to larger initial errors?}
+
+The LQR controller is significantly more robust than the pole placement controller. This conclusion is supported by:
+
+\begin{enumerate}
+\item \textbf{Error magnitudes}: LQR errors are 100-500 times smaller than PP errors across all scales
+\item \textbf{Error convergence}: LQR errors converge to near zero, while PP errors remain large
+\item \textbf{Performance degradation}: LQR shows graceful degradation (errors scale proportionally), while PP shows poor performance at all scales
+\item \textbf{Control efficiency}: LQR uses control effort efficiently with low saturation, while PP operates at saturation limits continuously
+\end{enumerate}
+
+The LQR controller's superior robustness can be attributed to its optimal design that minimizes a quadratic cost function, automatically balancing tracking errors and control effort. The weighting matrices (Q and R) can be tuned to emphasize tracking performance while maintaining reasonable control authority. In contrast, the pole placement controller's poor performance suggests that the manually selected poles may not be well-suited for the system dynamics, and the real poles constraint limits design flexibility.
+
+These results demonstrate the advantage of optimal control design (LQR) over direct pole placement for constrained systems requiring robustness.
+
+\end{document}

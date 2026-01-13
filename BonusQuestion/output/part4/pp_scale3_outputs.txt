@@ -1,0 +1,37 @@
+PP Controller - Scale 3x
+============================================================
+
+Pole Placement Controller Design:
+  Desired poles: [0.85 0.8  0.75 0.7  0.65]
+  K_PP shape: (2, 5)
+  K_PP:
+[[ 5.07887342e-01  7.95632734e-02  4.03667548e+00  1.40875981e+01
+   2.68274718e-04]
+ [ 4.82028667e+01 -4.18706394e+01  3.98478435e+02  8.86666609e+02
+   1.49196679e+01]]
+
+  Closed-loop eigenvalues: [0.85 0.65 0.8  0.75 0.7 ]
+  All eigenvalues real: True
+  All eigenvalues inside unit circle: True
+
+Performance Metrics:
+------------------------------------------------------------
+RMS e_y: 112.799894 m
+Max |e_y|: 312.671927 m
+RMS e_psi: 102.038628 deg
+Max |e_psi|: 179.852357 deg
+RMS e_v: 14.992004 m/s
+Max |e_v|: 15.499999 m/s
+
+Final errors:
+  e_y: 312.671927 m
+  e_psi: 150.230296 deg
+  e_v: -13.930903 m/s
+
+Control effort:
+  RMS steering: 25.000000 deg
+  RMS acceleration: 6.000000 m/s²
+
+Saturation:
+  Steering saturation: 1251/1251 (100.00%)
+  Acceleration saturation: 1251/1251 (100.00%)

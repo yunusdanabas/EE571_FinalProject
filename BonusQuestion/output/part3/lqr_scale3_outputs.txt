@@ -1,0 +1,38 @@
+LQR Controller - Scale 3x
+============================================================
+
+LQR Controller Design:
+  Q matrix: diag([ 5.  5. 50. 50. 30.])
+  R matrix: diag([2. 1.])
+  K_LQR shape: (2, 5)
+  K_LQR:
+[[ 3.02452260e-01  6.48540402e-01  2.05084928e+00  7.80061059e+00
+   8.85002383e-16]
+ [ 4.29538646e-16 -4.42251729e-16  6.26903498e-15  8.78296774e-15
+   5.18543526e+00]]
+
+  Closed-loop eigenvalues: [0.16205453+0.j         0.93594583+0.08549858j 0.93594583-0.08549858j
+ 0.85954751+0.j         0.89629129+0.j        ]
+  All eigenvalues inside unit circle: True
+
+Performance Metrics:
+------------------------------------------------------------
+RMS e_y: 2.367519 m
+Max |e_y|: 4.826301 m
+RMS e_psi: 33.713559 deg
+Max |e_psi|: 73.563382 deg
+RMS e_v: 3.593542 m/s
+Max |e_v|: 15.000000 m/s
+
+Final errors:
+  e_y: 4.245697 m
+  e_psi: -66.605324 deg
+  e_v: 0.001534 m/s
+
+Control effort:
+  RMS steering: 7.201701 deg
+  RMS acceleration: 1.292565 m/s²
+
+Saturation:
+  Steering saturation: 93/1251 (7.43%)
+  Acceleration saturation: 226/1251 (18.07%)
